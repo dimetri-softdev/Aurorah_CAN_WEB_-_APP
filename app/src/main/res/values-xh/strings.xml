@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Aurorah CAN</string>
+    <string name="app_tagline">Umnxeba Wonyango Womphakathi • Uncedo Nenkxaso Ezihlangeneyo</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Ekhaya</string>
+    <string name="nav_about">Malunga Nathi</string>
+    <string name="nav_volunteer">Umatshawekazi</string>
+    <string name="nav_request">Cela Uncedo</string>
+    <string name="nav_donate">Faka Isandla</string>
+    <string name="nav_impact">Impembelelo neIndaba</string>
+    <string name="nav_admin_login">Isebe Lomlawuli</string>
+    <string name="nav_admin_dashboard">Ibhodi Yomlawuli</string>
+    <string name="nav_settings">Iprofayile Neesetingi</string>
+    <string name="nav_login">Ngena</string>
+    <string name="nav_register">Bhalisa</string>
+
+    <!-- Authentication -->
+    <string name="login_title">Wamkelekile Kwakhona</string>
+    <string name="login_subtitle">Ngena ukuze ulawule inkxaso yomphakathi, imisebenzi yumatshawekazi, okanye iminikelo.</string>
+    <string name="field_email_username">I-imeyile okanye Igama lomsebenzisi</string>
+    <string name="field_password">Iphasiwedi</string>
+    <string name="remember_me">Gcina ngengqondo kule fowuni</string>
+    <string name="btn_login">Ngena</string>
+    <string name="btn_google_sso">Ngena nge-Google</string>
+    <string name="btn_admin_fast_switch">Ukungena Okukhawulezayo Kolawulo</string>
+    <string name="secure_access_banner">🔒 Unxibelelwano Olukhuselekileyo lwe-Aurorah CAN</string>
+    <string name="back_to_home">← Buyela Ekhaya</string>
+    <string name="no_account_prompt">Aunayo i-akhawunti?</string>
+    <string name="register_now">Bhalisa Ngoku</string>
+    <string name="login_invalid_credentials">Igama lomsebenzisi okanye iphasiwedi ayichanekanga. Nceda uzame kwakhona.</string>
+    <string name="admin_access_required">Kufuneka amalungelo omphathi ukuze ubuke le ibhodi.</string>
+
+    <string name="register_title">Zimanye ne-Aurorah CAN</string>
+    <string name="register_subtitle">Yenza i-akhawunti ukuze ucele uncedo, unikeze ngobuchule bakho okanye ulandele impembelelo yomphakathi.</string>
+    <string name="field_full_name">Amagama Apheleleyo</string>
+    <string name="field_email">Idilesi Ye-imeyile</string>
+    <string name="field_confirm_password">Emele Iphasiwedi</string>
+    <string name="select_role">Khetha Indima</string>
+    <string name="role_community_member">Ilungu Lomphakathi</string>
+    <string name="role_volunteer">Umatshawekazi</string>
+    <string name="role_admin">Umlawuli Womphakathi</string>
+    <string name="btn_register">Yenza I-akhawunti</string>
+    <string name="already_have_account">Ude wabhalisa?</string>
+    <string name="register_passwords_mismatch">Iiphasiwedi azihambelani.</string>
+    <string name="register_success">I-akhawunti ibhaliswe ngempumelelo!</string>
+
+    <!-- Settings & Profile -->
+    <string name="settings_title">Iprofayile Neesetingi Zesicelo</string>
+    <string name="settings_theme_section">Inkcazo Ne-Theme</string>
+    <string name="theme_system">Eya Sisistim</string>
+    <string name="theme_light">I-Theme Ekhanyayo</string>
+    <string name="theme_dark">I-Theme Emnyama</string>
+
+    <string name="settings_language_section">Iilwimi Neendawo</string>
+    <string name="lang_en">IsiNgesi</string>
+    <string name="lang_af">IsiBhulu</string>
+    <string name="lang_xh">isiXhosa</string>
+
+    <string name="settings_offline_section">Indlela Engekho Kwi-Intanethi Nolongwaniselo</string>
+    <string name="offline_status_online">Isistim Ikwi-Intanethi • Room DB Isongwanisiwe</string>
+    <string name="offline_status_syncing">Ilongwanisa iirekhodi zakho...</string>
+    <string name="btn_sync_now">Longwanisa Idatha Ngoku</string>
+    <string name="last_synced_time">Ilongwaniswe ngexesha: %1$s</string>
+
+    <string name="settings_notifications_section">Izaziso Nezivuseleli</string>
+    <string name="enable_push_notifications">Vula Izaziso Zakwi-fowuni</string>
+    <string name="notifications_desc">Fumana izaziso malunga nezicelo zomphakathi, imisebenzi yomatshawekazi neeindaba ezingxamisekileyo.</string>
+
+    <string name="logged_in_user_info">Ungene nge: %1$s (%2$s)</string>
+    <string name="btn_logout">Phuma</string>
+
+    <!-- General -->
+    <string name="btn_save">Gcina Utshintsho</string>
+    <string name="btn_cancel">Rhoxisa</string>
+    <string name="status_pending">Iselindele</string>
+    <string name="status_approved">Iwamkelekile</string>
+    <string name="status_fulfilled">Izalisekiswe</string>
+    <string name="status_urgent">Iyanxamiseka</string>
+</resources>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Aurorah CAN</string>
+    <string name="app_tagline">Gemeenskapsaksienetwerk • Onderlinge Hulp &amp; Ondersteuning</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Tuis</string>
+    <string name="nav_about">Oor Ons</string>
+    <string name="nav_volunteer">Vrywilliger</string>
+    <string name="nav_request">Vra vir Hulp</string>
+    <string name="nav_donate">Skenk</string>
+    <string name="nav_impact">Impak &amp; Nuus</string>
+    <string name="nav_admin_login">Admin Toegang</string>
+    <string name="nav_admin_dashboard">Admin Kontroleskerm</string>
+    <string name="nav_settings">Profiel &amp; Instellings</string>
+    <string name="nav_login">Teken In</string>
+    <string name="nav_register">Registreer</string>
+
+    <!-- Authentication -->
+    <string name="login_title">Welkom Terug</string>
+    <string name="login_subtitle">Teken in om gemeenskapsondersteuning, vrywilligerswerk of skenkings te bestuur.</string>
+    <string name="field_email_username">E-pos of Gebruikersnaam</string>
+    <string name="field_password">Wagwoord</string>
+    <string name="remember_me">Unthou my op hierdie toestel</string>
+    <string name="btn_login">Teken In</string>
+    <string name="btn_google_sso">Teken in met Google</string>
+    <string name="btn_admin_fast_switch">Admin Vinnige Intekek</string>
+    <string name="secure_access_banner">🔒 Enkripteer Aurorah CAN Veilige Verbinding</string>
+    <string name="back_to_home">← Terug na Tuis</string>
+    <string name="no_account_prompt">Het jy nie \'n rekening nie?</string>
+    <string name="register_now">Registreer Nou</string>
+    <string name="login_invalid_credentials">Ongeldige gebruikersnaam of wagwoord. Probeer asseblief weer.</string>
+    <string name="admin_access_required">Administrateurvoorregte vereis om hierdie kontroleskerm te bekyk.</string>
+
+    <string name="register_title">Sluit aan by Aurorah CAN</string>
+    <string name="register_subtitle">Skep \'n rekening om vir hulp te vra, vrywilligersvaardighede aan te bied, of gemeenskapsimpak te volg.</string>
+    <string name="field_full_name">Volle Naam</string>
+    <string name="field_email">E-posadres</string>
+    <string name="field_confirm_password">Bevestig Wagwoord</string>
+    <string name="select_role">Kies Rol</string>
+    <string name="role_community_member">Gemeenskapslid</string>
+    <string name="role_volunteer">Vrywilliger</string>
+    <string name="role_admin">Gemeenskapsadministrateur</string>
+    <string name="btn_register">Skep Rekening</string>
+    <string name="already_have_account">Reeds geregistreer?</string>
+    <string name="register_passwords_mismatch">Wagwoorde stem nie ooreen nie.</string>
+    <string name="register_success">Rekening suksesvol geregistreer!</string>
+
+    <!-- Settings & Profile -->
+    <string name="settings_title">Profiel &amp; Toepassinginstellings</string>
+    <string name="settings_theme_section">Voorkoms &amp; Tema</string>
+    <string name="theme_system">Stelsel Verstek</string>
+    <string name="theme_light">Lig BordoTema</string>
+    <string name="theme_dark">Donker BordoTema</string>
+
+    <string name="settings_language_section">Taal &amp; Lokalisering</string>
+    <string name="lang_en">Engels</string>
+    <string name="lang_af">Afrikaans</string>
+    <string name="lang_xh">isiXhosa</string>
+
+    <string name="settings_offline_section">Alynmodus &amp; Sinkronisering</string>
+    <string name="offline_status_online">Stelsel Aanlyn • Room DB Gesinkroniseer</string>
+    <string name="offline_status_syncing">Sinkroniseer plaaslike rekords met bediener…</string>
+    <string name="btn_sync_now">Sinkroniseer Data Nou</string>
+    <string name="last_synced_time">Laaste gesinkroniseer: %1$s</string>
+
+    <string name="settings_notifications_section">Kennisgewings &amp; Waarskuwings</string>
+    <string name="enable_push_notifications">Aktiveer Stootkennisgewings</string>
+    <string name="notifications_desc">Ontvang opdaterings oor gemeenskapsversoeke, vrywilligerstake en dringende nuus.</string>
+
+    <string name="logged_in_user_info">Ingeteken as: %1$s (%2$s)</string>
+    <string name="btn_logout">Teken Uit</string>
+
+    <!-- General -->
+    <string name="btn_save">Stoor Veranderinge</string>
+    <string name="btn_cancel">Kanselleer</string>
+    <string name="status_pending">Hangende</string>
+    <string name="status_approved">Goedgekeur</string>
+    <string name="status_fulfilled">Vervul</string>
+    <string name="status_urgent">Dringend</string>
+</resources>
