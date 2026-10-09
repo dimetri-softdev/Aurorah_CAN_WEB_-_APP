@@ -16,5 +16,7 @@ data class BeneficiaryEntity(
     val assistanceNeeded: String,
     val urgency: String,
     val registrationDate: String,
-    val status: String = "Pending"
+    val status: String = "Pending",
+    val popiaConsentTimestamp: String = "",
+    val popiaConsentVersion: String = "v1.0"
 )

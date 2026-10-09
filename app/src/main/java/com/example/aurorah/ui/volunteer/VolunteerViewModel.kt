@@ -85,6 +85,7 @@ class VolunteerViewModel(
         viewModelScope.launch {
             _uiState.value = state.copy(isLoading = true, errorMessage = null)
             val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             val fullName = "${state.firstName.trim()} ${state.lastName.trim()}"
 
             repository.insertVolunteer(
@@ -97,7 +98,9 @@ class VolunteerViewModel(
                     availability = state.selectedAvailability,
                     address = "${state.selectedArea}, Cape Town",
                     status = "Active",
-                    registrationDate = today
+                    registrationDate = today,
+                    popiaConsentTimestamp = now,
+                    popiaConsentVersion = "v1.0"
                 )
             )
 

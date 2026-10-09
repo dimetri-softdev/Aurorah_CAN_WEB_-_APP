@@ -16,5 +16,7 @@ data class DonationEntity(
     val isAnonymous: Boolean = false,
     val message: String = "",
     val paymentMethod: String,
-    val date: String
+    val date: String,
+    val popiaConsentTimestamp: String = "",
+    val popiaConsentVersion: String = "v1.0"
 )

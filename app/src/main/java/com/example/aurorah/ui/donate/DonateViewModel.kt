@@ -111,6 +111,7 @@ class DonateViewModel(
             delay(1200) // Simulate secure gateway processing
 
             val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             val donation = DonationEntity(
                 donorName = if (state.isAnonymous) "Anonymous Benefactor" else state.donorName.trim(),
                 email = if (state.isAnonymous) "anonymous@aurorahcan.org" else state.donorEmail.trim(),
@@ -121,7 +122,9 @@ class DonateViewModel(
                 isAnonymous = state.isAnonymous,
                 message = state.message.ifBlank { "Supporting Kuils River & Cape Metro Community" },
                 paymentMethod = state.paymentMethod,
-                date = today
+                date = today,
+                popiaConsentTimestamp = now,
+                popiaConsentVersion = "v1.0"
             )
 
             val id = repository.insertDonation(donation)

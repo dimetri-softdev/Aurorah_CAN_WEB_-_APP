@@ -29,4 +29,7 @@ interface AdminDao {
 
     @Query("SELECT COUNT(*) FROM admins")
     suspend fun getCount(): Int
+
+    @Query("UPDATE admins SET fullName = 'Anonymized Admin', email = 'anonymized@privacy.local' WHERE email = :email OR username = :username")
+    suspend fun anonymizeAdminByEmailOrUsername(email: String, username: String)
 }

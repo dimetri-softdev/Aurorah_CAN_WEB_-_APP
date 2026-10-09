@@ -26,4 +26,10 @@ interface DonationDao {
 
     @Query("SELECT COUNT(*) FROM donations")
     suspend fun getCount(): Int
+
+    @Query("UPDATE donations SET donorName = 'Anonymous Donor', email = 'anonymized@privacy.local', phone = '0000000000', isAnonymous = 1 WHERE email = :email OR donorName = :name")
+    suspend fun anonymizeDonationByEmailOrName(email: String, name: String)
+
+    @Query("DELETE FROM donations WHERE email = :email OR donorName = :name")
+    suspend fun deleteDonationByEmailOrName(email: String, name: String)
 }

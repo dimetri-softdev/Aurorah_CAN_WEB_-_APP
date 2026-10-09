@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -75,6 +76,31 @@ class SettingsViewModel(
                 isSyncing = false,
                 syncStatusMessage = "Sync completed successfully!"
             )
+        }
+    }
+
+    fun requestRightToBeForgotten(anonymizeOnly: Boolean = true) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isSyncing = true,
+                syncStatusMessage = "Processing POPIA Right to be Forgotten request..."
+            )
+            val session = repository.userSessionFlow.first()
+            val identifier = session.email.ifEmpty { session.username }
+
+            if (anonymizeOnly) {
+                repository.anonymizeUserData(identifier, session.fullName)
+                _uiState.value = _uiState.value.copy(
+                    isSyncing = false,
+                    syncStatusMessage = "Your personal data has been anonymized in compliance with POPIA Act No. 4 of 2013."
+                )
+            } else {
+                repository.deleteUserDataCompletely(identifier, session.fullName)
+                _uiState.value = _uiState.value.copy(
+                    isSyncing = false,
+                    syncStatusMessage = "All personal records have been completely erased from the database."
+                )
+            }
         }
     }
 

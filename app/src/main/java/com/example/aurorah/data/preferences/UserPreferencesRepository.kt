@@ -18,7 +18,11 @@ data class UserSession(
     val username: String = "",
     val fullName: String = "",
     val email: String = "",
-    val role: String = "Guest"
+    val role: String = "GUEST", // Roles: "ADMIN", "VOLUNTEER", "BENEFICIARY", "GUEST"
+    val sessionToken: String = "",
+    val authProvider: String = "Email", // "Email", "Google"
+    val popiaConsentTimestamp: String = "",
+    val popiaConsentVersion: String = "v1.0"
 )
 
 class UserPreferencesRepository(private val context: Context) {
@@ -31,6 +35,10 @@ class UserPreferencesRepository(private val context: Context) {
         val FULL_NAME = stringPreferencesKey("full_name")
         val EMAIL = stringPreferencesKey("email")
         val ROLE = stringPreferencesKey("role")
+        val SESSION_TOKEN = stringPreferencesKey("session_token")
+        val AUTH_PROVIDER = stringPreferencesKey("auth_provider")
+        val POPIA_CONSENT_TIMESTAMP = stringPreferencesKey("popia_consent_timestamp")
+        val POPIA_CONSENT_VERSION = stringPreferencesKey("popia_consent_version")
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val LAST_SYNCED = stringPreferencesKey("last_synced")
     }
@@ -50,7 +58,11 @@ class UserPreferencesRepository(private val context: Context) {
             username = preferences[PreferencesKeys.USERNAME] ?: "",
             fullName = preferences[PreferencesKeys.FULL_NAME] ?: "",
             email = preferences[PreferencesKeys.EMAIL] ?: "",
-            role = preferences[PreferencesKeys.ROLE] ?: "Guest"
+            role = preferences[PreferencesKeys.ROLE] ?: "GUEST",
+            sessionToken = preferences[PreferencesKeys.SESSION_TOKEN] ?: "",
+            authProvider = preferences[PreferencesKeys.AUTH_PROVIDER] ?: "Email",
+            popiaConsentTimestamp = preferences[PreferencesKeys.POPIA_CONSENT_TIMESTAMP] ?: "",
+            popiaConsentVersion = preferences[PreferencesKeys.POPIA_CONSENT_VERSION] ?: "v1.0"
         )
     }
 
@@ -81,6 +93,10 @@ class UserPreferencesRepository(private val context: Context) {
             preferences[PreferencesKeys.FULL_NAME] = session.fullName
             preferences[PreferencesKeys.EMAIL] = session.email
             preferences[PreferencesKeys.ROLE] = session.role
+            preferences[PreferencesKeys.SESSION_TOKEN] = session.sessionToken
+            preferences[PreferencesKeys.AUTH_PROVIDER] = session.authProvider
+            preferences[PreferencesKeys.POPIA_CONSENT_TIMESTAMP] = session.popiaConsentTimestamp
+            preferences[PreferencesKeys.POPIA_CONSENT_VERSION] = session.popiaConsentVersion
         }
     }
 
@@ -90,7 +106,11 @@ class UserPreferencesRepository(private val context: Context) {
             preferences[PreferencesKeys.USERNAME] = ""
             preferences[PreferencesKeys.FULL_NAME] = ""
             preferences[PreferencesKeys.EMAIL] = ""
-            preferences[PreferencesKeys.ROLE] = "Guest"
+            preferences[PreferencesKeys.ROLE] = "GUEST"
+            preferences[PreferencesKeys.SESSION_TOKEN] = ""
+            preferences[PreferencesKeys.AUTH_PROVIDER] = "Email"
+            preferences[PreferencesKeys.POPIA_CONSENT_TIMESTAMP] = ""
+            preferences[PreferencesKeys.POPIA_CONSENT_VERSION] = "v1.0"
         }
     }
 

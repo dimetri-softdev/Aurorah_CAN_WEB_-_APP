@@ -71,6 +71,21 @@
     <string name="logged_in_user_info">Logged in as: %1$s (%2$s)</string>
     <string name="btn_logout">Log Out</string>
 
+    <!-- POPIA Privacy & Compliance -->
+    <string name="popia_section_title">POPIA Privacy &amp; Compliance</string>
+    <string name="popia_consent_status">POPIA Consent Status: Compliant (%1$s)</string>
+    <string name="popia_consent_desc">In compliance with the Protection of Personal Information Act (POPIA Act No. 4 of 2013), your personal data is encrypted and protected.</string>
+
+    <string name="popia_right_to_be_forgotten">Right to be Forgotten / Data Control</string>
+    <string name="popia_anonymize_btn">Anonymize / Delete My Personal Data</string>
+    <string name="popia_confirm_anonymize_title">Confirm Data Anonymization</string>
+    <string name="popia_confirm_anonymize_msg">Are you sure you want to anonymize or delete your personal data? This action will sanitize or remove your PII from active records in accordance with POPIA regulations.</string>
+    <string name="popia_anonymize_success">Your personal records have been successfully anonymized in compliance with POPIA.</string>
+
+    <string name="popia_audit_card_title">POPIA Compliance &amp; Audit Verification</string>
+    <string name="popia_audit_status">100% POPIA Compliant • Audit Log Verified</string>
+    <string name="popia_dpo_contact">Data Protection Officer: dpo@aurorahcan.org</string>
+
     <!-- General -->
     <string name="btn_save">Save Changes</string>
     <string name="btn_cancel">Cancel</string>

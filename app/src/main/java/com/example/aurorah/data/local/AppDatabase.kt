@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
         ReportEntity::class,
         NewsEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -120,7 +120,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 availability = "Weekends & Evenings",
                                 address = "12 Beacon Valley Rd, Mitchells Plain",
                                 status = "Active",
-                                registrationDate = "2025-01-15"
+                                registrationDate = "2025-01-15",
+                                popiaConsentTimestamp = "2025-01-15 09:00:00",
+                                popiaConsentVersion = "v1.0"
                             ),
                             VolunteerEntity(
                                 id = 2,
@@ -132,7 +134,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 availability = "Weekdays",
                                 address = "45 Mew Way, Khayelitsha",
                                 status = "Active",
-                                registrationDate = "2025-02-01"
+                                registrationDate = "2025-02-01",
+                                popiaConsentTimestamp = "2025-02-01 11:30:00",
+                                popiaConsentVersion = "v1.0"
                             ),
                             VolunteerEntity(
                                 id = 3,
@@ -144,7 +148,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 availability = "Flexible",
                                 address = "89 Victoria Rd, Woodstock",
                                 status = "Active",
-                                registrationDate = "2025-03-10"
+                                registrationDate = "2025-03-10",
+                                popiaConsentTimestamp = "2025-03-10 14:15:00",
+                                popiaConsentVersion = "v1.0"
                             )
                         )
                     )
@@ -166,7 +172,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 assistanceNeeded = "Weekly Food Parcel & Electricity Voucher",
                                 urgency = "High",
                                 registrationDate = "2025-05-01",
-                                status = "Pending"
+                                status = "Pending",
+                                popiaConsentTimestamp = "2025-05-01 08:45:00",
+                                popiaConsentVersion = "v1.0"
                             ),
                             BeneficiaryEntity(
                                 id = 2,
@@ -179,7 +187,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 assistanceNeeded = "Chronic Medical Supply Assistance",
                                 urgency = "Urgent",
                                 registrationDate = "2025-04-22",
-                                status = "Approved"
+                                status = "Approved",
+                                popiaConsentTimestamp = "2025-04-22 10:20:00",
+                                popiaConsentVersion = "v1.0"
                             ),
                             BeneficiaryEntity(
                                 id = 3,
@@ -192,7 +202,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 assistanceNeeded = "Winter Blankets & Warm Clothing",
                                 urgency = "Medium",
                                 registrationDate = "2025-04-10",
-                                status = "Fulfilled"
+                                status = "Fulfilled",
+                                popiaConsentTimestamp = "2025-04-10 16:00:00",
+                                popiaConsentVersion = "v1.0"
                             )
                         )
                     )
@@ -214,7 +226,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 isAnonymous = false,
                                 message = "Supporting Aurorah CAN\'s winter food security program.",
                                 paymentMethod = "EFT Direct Transfer",
-                                date = "2025-05-18"
+                                date = "2025-05-18",
+                                popiaConsentTimestamp = "2025-05-18 09:15:00",
+                                popiaConsentVersion = "v1.0"
                             ),
                             DonationEntity(
                                 id = 2,
@@ -227,7 +241,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 isAnonymous = false,
                                 message = "Glad to help local families.",
                                 paymentMethod = "Credit Card",
-                                date = "2025-05-15"
+                                date = "2025-05-15",
+                                popiaConsentTimestamp = "2025-05-15 12:00:00",
+                                popiaConsentVersion = "v1.0"
                             ),
                             DonationEntity(
                                 id = 3,
@@ -240,7 +256,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 isAnonymous = true,
                                 message = "Keep up the noble work!",
                                 paymentMethod = "SnapScan",
-                                date = "2025-05-12"
+                                date = "2025-05-12",
+                                popiaConsentTimestamp = "2025-05-12 15:45:00",
+                                popiaConsentVersion = "v1.0"
                             )
                         )
                     )

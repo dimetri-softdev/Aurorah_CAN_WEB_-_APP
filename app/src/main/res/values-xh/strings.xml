@@ -71,6 +71,21 @@
     <string name="logged_in_user_info">Ungene nge: %1$s (%2$s)</string>
     <string name="btn_logout">Phuma</string>
 
+    <!-- POPIA Privacy & Compliance -->
+    <string name="popia_section_title">I-POPIA Ukhuseleko Lwedatha NeBucala</string>
+    <string name="popia_consent_status">Imeko Ye-POPIA: Uyayithobela (%1$s)</string>
+    <string name="popia_consent_desc">Ngokuhambelana noMthetho woKhuseleko lwaLwazi loMntu siqu (i-POPIA Act No. 4 ka-2013), idatha yakho ikhuselekile.</string>
+
+    <string name="popia_right_to_be_forgotten">Ilungelo Lokulityalwa / Anonimiseer Idatha</string>
+    <string name="popia_anonymize_btn">Susela Idatha Yam Siqu / Cima</string>
+    <string name="popia_confirm_anonymize_title">Emele Ukucinywa Kwedatha</string>
+    <string name="popia_confirm_anonymize_msg">Uqinisekile ufuna ukucima okanye ukususa igama ne-imeyile yakho? Le meko izawususa idatha yakho ngokomthetho we-POPIA.</string>
+    <string name="popia_anonymize_success">Idatha yakho isusiwe ngempumelelo ngokwemimiselo ye-POPIA.</string>
+
+    <string name="popia_audit_card_title">I-POPIA Ukuthobela Ne-Audit Log</string>
+    <string name="popia_audit_status">100% I-POPIA Iyathobela • I-Audit Iqinisekisiwe</string>
+    <string name="popia_dpo_contact">IGosa LoKhuseleko Lwedatha: dpo@aurorahcan.org</string>
+
     <!-- General -->
     <string name="btn_save">Gcina Utshintsho</string>
     <string name="btn_cancel">Rhoxisa</string>

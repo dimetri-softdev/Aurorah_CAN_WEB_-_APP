@@ -15,5 +15,7 @@ data class VolunteerEntity(
     val availability: String,
     val address: String,
     val status: String = "Active",
-    val registrationDate: String
+    val registrationDate: String,
+    val popiaConsentTimestamp: String = "",
+    val popiaConsentVersion: String = "v1.0"
 )

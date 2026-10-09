@@ -31,4 +31,10 @@ interface BeneficiaryDao {
 
     @Query("SELECT COUNT(*) FROM beneficiaries")
     suspend fun getCount(): Int
+
+    @Query("UPDATE beneficiaries SET fullName = 'Anonymized Beneficiary', email = 'anonymized@privacy.local', phone = '0000000000', address = 'Anonymized', status = 'Anonymized' WHERE email = :email OR fullName = :name")
+    suspend fun anonymizeBeneficiaryByEmailOrName(email: String, name: String)
+
+    @Query("DELETE FROM beneficiaries WHERE email = :email OR fullName = :name")
+    suspend fun deleteBeneficiaryByEmailOrName(email: String, name: String)
 }

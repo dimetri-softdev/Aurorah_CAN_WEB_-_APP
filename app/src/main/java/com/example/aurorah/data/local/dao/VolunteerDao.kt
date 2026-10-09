@@ -31,4 +31,10 @@ interface VolunteerDao {
 
     @Query("SELECT COUNT(*) FROM volunteers")
     suspend fun getCount(): Int
+
+    @Query("UPDATE volunteers SET fullName = 'Anonymized User', email = 'anonymized@privacy.local', phone = '0000000000', address = 'Anonymized', status = 'Anonymized' WHERE email = :email OR fullName = :name")
+    suspend fun anonymizeVolunteerByEmailOrName(email: String, name: String)
+
+    @Query("DELETE FROM volunteers WHERE email = :email OR fullName = :name")
+    suspend fun deleteVolunteerByEmailOrName(email: String, name: String)
 }

@@ -21,7 +21,7 @@
     <string name="login_subtitle">Teken in om gemeenskapsondersteuning, vrywilligerswerk of skenkings te bestuur.</string>
     <string name="field_email_username">E-pos of Gebruikersnaam</string>
     <string name="field_password">Wagwoord</string>
-    <string name="remember_me">Unthou my op hierdie toestel</string>
+    <string name="remember_me">Onthou my op hierdie toestel</string>
     <string name="btn_login">Teken In</string>
     <string name="btn_google_sso">Teken in met Google</string>
     <string name="btn_admin_fast_switch">Admin Vinnige Intekek</string>
@@ -70,6 +70,21 @@
 
     <string name="logged_in_user_info">Ingeteken as: %1$s (%2$s)</string>
     <string name="btn_logout">Teken Uit</string>
+
+    <!-- POPIA Privacy & Compliance -->
+    <string name="popia_section_title">POPIA Privaatheid &amp; Databeskerming</string>
+    <string name="popia_consent_status">POPIA Toestemmingstatus: Voldoen (%1$s)</string>
+    <string name="popia_consent_desc">In ooreenstemming met die Wet op Beskerming van Persoonlike Inligting (POPIA Wet No. 4 van 2013), word u data geënkripteer en beskerm.</string>
+
+    <string name="popia_right_to_be_forgotten">Reg om Vergeet te word / Databeheer</string>
+    <string name="popia_anonymize_btn">Anonimiseer / Vee My Persoonlike Data Uit</string>
+    <string name="popia_confirm_anonymize_title">Bevestig Data-anonimisering</string>
+    <string name="popia_confirm_anonymize_msg">Is u seker u wil u persoonlike data anonimiseer of uitvee? Hierdie aksie sal u persoonlike inligting verwyder volgens POPIA-regulasies.</string>
+    <string name="popia_anonymize_success">U persoonlike rekords is suksesvol geanonimiseer volgens POPIA-vereistes.</string>
+
+    <string name="popia_audit_card_title">POPIA Voldoening &amp; Ouditlogboek</string>
+    <string name="popia_audit_status">100% POPIA Voldoen • Oudit Geverifieer</string>
+    <string name="popia_dpo_contact">Databeskermingsbeampte: dpo@aurorahcan.org</string>
 
     <!-- General -->
     <string name="btn_save">Stoor Veranderinge</string>

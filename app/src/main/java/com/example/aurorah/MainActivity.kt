@@ -8,13 +8,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.aurorah.ui.shell.AurorahAppShell
 import com.example.aurorah.ui.theme.AurorahTheme
 import com.example.aurorah.ui.theme.ThemeMode
+import com.example.aurorah.util.LanguageManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,13 +31,24 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeMode by repository.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
+            val languageCode by repository.languageCodeFlow.collectAsState(initial = "en")
 
-            AurorahTheme(themeMode = themeMode) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AurorahAppShell()
+            LaunchedEffect(languageCode) {
+                LanguageManager.updateLocaleInResources(this@MainActivity, languageCode)
+            }
+
+            val localizedContext = remember(languageCode) {
+                LanguageManager.applyLocale(this@MainActivity, languageCode)
+            }
+
+            CompositionLocalProvider(LocalContext provides localizedContext) {
+                AurorahTheme(themeMode = themeMode) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        AurorahAppShell()
+                    }
                 }
             }
         }

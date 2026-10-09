@@ -91,6 +91,7 @@ class AssistanceViewModel(
         viewModelScope.launch {
             _uiState.value = state.copy(isLoading = true, errorMessage = null)
             val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             val fullName = "${state.firstName.trim()} ${state.lastName.trim()}"
             val refCode = "AUR-${(1000..9999).random()}"
 
@@ -105,7 +106,9 @@ class AssistanceViewModel(
                     assistanceNeeded = "${state.selectedAssistanceType}: ${state.describeNeed.trim()}",
                     urgency = state.urgencyLevel,
                     registrationDate = today,
-                    status = "Pending"
+                    status = "Pending",
+                    popiaConsentTimestamp = now,
+                    popiaConsentVersion = "v1.0"
                 )
             )
 

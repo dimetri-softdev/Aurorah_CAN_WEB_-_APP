@@ -61,6 +61,22 @@ class AurorahRepository(
     fun getNewsById(id: Int): Flow<NewsEntity?> = database.newsDao().getNewsById(id)
     suspend fun insertNews(news: NewsEntity): Long = database.newsDao().insert(news)
 
+    // --- POPIA "Right to be Forgotten" & Data Anonymization ---
+    suspend fun anonymizeUserData(emailOrUsername: String, name: String) {
+        database.volunteerDao().anonymizeVolunteerByEmailOrName(emailOrUsername, name)
+        database.beneficiaryDao().anonymizeBeneficiaryByEmailOrName(emailOrUsername, name)
+        database.donationDao().anonymizeDonationByEmailOrName(emailOrUsername, name)
+        database.adminDao().anonymizeAdminByEmailOrUsername(emailOrUsername, emailOrUsername)
+        clearUserSession()
+    }
+
+    suspend fun deleteUserDataCompletely(emailOrUsername: String, name: String) {
+        database.volunteerDao().deleteVolunteerByEmailOrName(emailOrUsername, name)
+        database.beneficiaryDao().deleteBeneficiaryByEmailOrName(emailOrUsername, name)
+        database.donationDao().deleteDonationByEmailOrName(emailOrUsername, name)
+        clearUserSession()
+    }
+
     // --- User Session & Preferences ---
     val themeModeFlow: Flow<ThemeMode> = userPreferences.themeModeFlow
     val languageCodeFlow: Flow<String> = userPreferences.languageCodeFlow
