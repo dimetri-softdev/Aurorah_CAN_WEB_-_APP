@@ -8,6 +8,7 @@ import com.example.aurorah.data.local.entity.DonationEntity
 import com.example.aurorah.data.local.entity.ReportEntity
 import com.example.aurorah.data.local.entity.VolunteerEntity
 import com.example.aurorah.data.preferences.UserSession
+import com.example.aurorah.data.remote.AzureServerConnectionStatus
 import com.example.aurorah.data.repository.AurorahRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +22,8 @@ data class AdminUiState(
     val selectedTab: Int = 0,
     val exportNotification: String? = null,
     val searchQuery: String = "",
-    val isExportingPdf: Boolean = false
+    val isExportingPdf: Boolean = false,
+    val isSyncing: Boolean = false
 )
 
 class AdminViewModel(
@@ -65,6 +67,29 @@ class AdminViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    val azureConnectionStatus: StateFlow<AzureServerConnectionStatus> = repository.azureConnectionStatusFlow
+
+    init {
+        checkAzureConnection()
+    }
+
+    fun checkAzureConnection() {
+        viewModelScope.launch {
+            repository.checkAzureServerConnection()
+        }
+    }
+
+    fun syncDatabaseNow() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSyncing = true)
+            val result = repository.syncWithRemote()
+            _uiState.value = _uiState.value.copy(
+                isSyncing = false,
+                exportNotification = "Sync Result (${result.timestamp}): ${result.message}"
+            )
+        }
+    }
 
     fun selectTab(index: Int) {
         _uiState.value = _uiState.value.copy(selectedTab = index)

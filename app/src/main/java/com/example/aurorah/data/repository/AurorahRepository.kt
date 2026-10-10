@@ -10,13 +10,34 @@ import com.example.aurorah.data.local.entity.ReportEntity
 import com.example.aurorah.data.local.entity.VolunteerEntity
 import com.example.aurorah.data.preferences.UserPreferencesRepository
 import com.example.aurorah.data.preferences.UserSession
+import com.example.aurorah.data.remote.AzureServerConnectionStatus
+import com.example.aurorah.data.remote.OfflineSyncManager
+import com.example.aurorah.data.remote.SyncResult
 import com.example.aurorah.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 class AurorahRepository(
     private val database: AppDatabase,
-    private val userPreferences: UserPreferencesRepository
+    private val userPreferences: UserPreferencesRepository,
+    private val offlineSyncManager: OfflineSyncManager = OfflineSyncManager()
 ) {
+    // --- Remote Sync & Network Layer ---
+    val azureConnectionStatusFlow: StateFlow<AzureServerConnectionStatus> = offlineSyncManager.connectionStatusState
+    val syncResultFlow: StateFlow<SyncResult> = offlineSyncManager.syncResultState
+
+    suspend fun syncWithRemote(): SyncResult {
+        val result = offlineSyncManager.syncAllData(database)
+        if (result.timestamp.isNotEmpty()) {
+            userPreferences.updateLastSynced(result.timestamp)
+        }
+        return result
+    }
+
+    suspend fun checkAzureServerConnection(): AzureServerConnectionStatus {
+        return offlineSyncManager.checkConnectionStatus()
+    }
+
     // --- Admin ---
     fun getAllAdmins(): Flow<List<AdminEntity>> = database.adminDao().getAllAdmins()
     suspend fun getAdminByUsername(username: String): AdminEntity? = database.adminDao().getAdminByUsername(username)

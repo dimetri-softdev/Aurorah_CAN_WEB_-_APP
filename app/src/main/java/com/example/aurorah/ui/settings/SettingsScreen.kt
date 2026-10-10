@@ -69,6 +69,7 @@ fun SettingsScreen(
     val notificationsEnabled by viewModel.notificationsEnabledState.collectAsState()
     val lastSynced by viewModel.lastSyncedState.collectAsState()
     val userSession by viewModel.userSessionState.collectAsState()
+    val azureStatus by viewModel.azureConnectionStatus.collectAsState()
 
     var showAnonymizeDialog by remember { mutableStateOf(false) }
 
@@ -444,6 +445,45 @@ fun SettingsScreen(
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
+
+                // Azure SQL Server Connection Banner
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(if (azureStatus.isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Azure SQL: ${azureStatus.serverName}",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Database: ${azureStatus.databaseName} • Auth: ${azureStatus.authType} (${azureStatus.adminLogin})",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = azureStatus.statusMessage,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(

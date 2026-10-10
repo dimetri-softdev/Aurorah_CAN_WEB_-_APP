@@ -4,19 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.aurorah.data.preferences.UserSession
+import com.example.aurorah.data.remote.AzureServerConnectionStatus
 import com.example.aurorah.data.repository.AurorahRepository
 import com.example.aurorah.ui.theme.ThemeMode
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 data class SettingsUiState(
     val isSyncing: Boolean = false,
@@ -45,6 +42,18 @@ class SettingsViewModel(
     val userSessionState: StateFlow<UserSession> = repository.userSessionFlow
         .asStateFlowIn(viewModelScope, UserSession())
 
+    val azureConnectionStatus: StateFlow<AzureServerConnectionStatus> = repository.azureConnectionStatusFlow
+
+    init {
+        checkAzureConnection()
+    }
+
+    fun checkAzureConnection() {
+        viewModelScope.launch {
+            repository.checkAzureServerConnection()
+        }
+    }
+
     fun setThemeMode(themeMode: ThemeMode) {
         viewModelScope.launch {
             repository.setThemeMode(themeMode)
@@ -67,14 +76,12 @@ class SettingsViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isSyncing = true,
-                syncStatusMessage = "Syncing local Room database with Aurorah network..."
+                syncStatusMessage = "Connecting to aurorah-sql-server.database.windows.net (aurorah-db)..."
             )
-            delay(1500)
-            val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            repository.updateLastSynced(now)
+            val result = repository.syncWithRemote()
             _uiState.value = _uiState.value.copy(
                 isSyncing = false,
-                syncStatusMessage = "Sync completed successfully!"
+                syncStatusMessage = result.message
             )
         }
     }
