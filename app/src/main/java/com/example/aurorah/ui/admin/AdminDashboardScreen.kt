@@ -18,7 +18,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.AdminPanelSettings
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Favorite
@@ -29,6 +32,7 @@ import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -55,17 +59,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.aurorah.R
 import com.example.aurorah.data.local.entity.BeneficiaryEntity
 import com.example.aurorah.data.local.entity.DonationEntity
 import com.example.aurorah.data.local.entity.ReportEntity
 import com.example.aurorah.data.local.entity.VolunteerEntity
 import com.example.aurorah.ui.theme.LocalExtendedColors
+import com.example.aurorah.util.MatchRecommendation
+import com.example.aurorah.util.ResourceMatchingEngine
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -76,6 +81,7 @@ fun AdminDashboardScreen(
     viewModel: AdminViewModel,
     onNavigateToLogin: () -> Unit
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val userSession by viewModel.userSessionState.collectAsState()
     val volunteersList by viewModel.volunteersList.collectAsState()
@@ -85,6 +91,18 @@ fun AdminDashboardScreen(
     val azureStatus by viewModel.azureConnectionStatus.collectAsState()
 
     var showPopiaAuditDialog by remember { mutableStateOf(false) }
+    var showNewsPublisherDialog by remember { mutableStateOf(false) }
+
+    // News Publisher Dialog Modal
+    if (showNewsPublisherDialog) {
+        NewsPublisherDialog(
+            onDismiss = { showNewsPublisherDialog = false },
+            onPublishNews = { news ->
+                viewModel.publishNews(news)
+                showNewsPublisherDialog = false
+            }
+        )
+    }
 
     // Export Notification Modal
     uiState.exportNotification?.let { notif ->
@@ -96,8 +114,23 @@ fun AdminDashboardScreen(
             title = { Text("Admin Action Result", fontWeight = FontWeight.Bold) },
             text = { Text(notif) },
             confirmButton = {
-                Button(onClick = { viewModel.dismissNotification() }) {
-                    Text("OK")
+                Row {
+                    if (uiState.generatedFileToOpen != null) {
+                        Button(
+                            onClick = {
+                                viewModel.openGeneratedFile(context)
+                                viewModel.dismissNotification()
+                            }
+                        ) {
+                            Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Open / Share File")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    OutlinedButton(onClick = { viewModel.dismissNotification() }) {
+                        Text("Close")
+                    }
                 }
             }
         )
@@ -114,7 +147,7 @@ fun AdminDashboardScreen(
             title = { Text("POPIA Compliance & Audit Verification", fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text("✅ Room DB Tables: Encrpyted & POPIA Compliant", fontWeight = FontWeight.SemiBold)
+                    Text("✅ Room DB Tables: Encrypted & POPIA Compliant", fontWeight = FontWeight.SemiBold)
                     Text("✅ Consent Version: v1.0 (Timestamps logged)")
                     Text("✅ SHA-256 Salted Password Hashing: Active")
                     Text("✅ Data Protection Officer: dpo@aurorahcan.org")
@@ -226,17 +259,17 @@ fun AdminDashboardScreen(
                     )
                 }
 
-                Surface(
+                Button(
+                    onClick = { showNewsPublisherDialog = true },
                     shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f)
-                ) {
-                    Text(
-                        text = "LIVE",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.onPrimary,
+                        contentColor = MaterialTheme.colorScheme.primary
                     )
+                ) {
+                    Icon(Icons.Rounded.Campaign, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Publish Appeal", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -423,7 +456,7 @@ fun AdminDashboardScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         // Tab Navigation
-        val tabTitles = listOf("Overview", "Volunteers", "Donations", "Beneficiaries", "Reports")
+        val tabTitles = listOf("Overview", "Matching Engine", "Volunteers", "Donations", "Beneficiaries", "Reports")
 
         ScrollableTabRow(
             selectedTabIndex = uiState.selectedTab,
@@ -452,10 +485,11 @@ fun AdminDashboardScreen(
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             when (uiState.selectedTab) {
                 0 -> OverviewChartsTab()
-                1 -> VolunteersTableTab(volunteersList, viewModel)
-                2 -> DonationsTableTab(donationsList, viewModel)
-                3 -> BeneficiariesTableTab(beneficiariesList, viewModel)
-                4 -> ReportsTab(reportsList, viewModel)
+                1 -> ResourceMatchingTab(beneficiariesList, volunteersList, donationsList, viewModel)
+                2 -> VolunteersTableTab(volunteersList, viewModel)
+                3 -> DonationsTableTab(donationsList, viewModel)
+                4 -> BeneficiariesTableTab(beneficiariesList, viewModel)
+                5 -> ReportsTab(reportsList, viewModel)
             }
         }
     }
@@ -691,12 +725,156 @@ fun ChartLegendItem(color: Color, label: String) {
     }
 }
 
+// --- RESOURCE MATCHING TAB ---
+@Composable
+fun ResourceMatchingTab(
+    beneficiaries: List<BeneficiaryEntity>,
+    volunteers: List<VolunteerEntity>,
+    donations: List<DonationEntity>,
+    viewModel: AdminViewModel
+) {
+    val matches = remember(beneficiaries, volunteers, donations) {
+        ResourceMatchingEngine.generateMatches(beneficiaries, volunteers, donations)
+    }
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Rounded.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = "Automated Match Recommendations",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Scored by Area, Assistance Type & Urgency Level",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        matches.forEach { match ->
+            MatchRecommendationCard(
+                recommendation = match,
+                onAssignVolunteer = {
+                    val volName = match.recommendedVolunteer?.fullName ?: "Default Volunteer"
+                    viewModel.assignVolunteerToBeneficiary(match.beneficiary, volName)
+                },
+                onAllocateResource = {
+                    val cause = match.recommendedDonation?.cause ?: match.beneficiary.assistanceNeeded
+                    viewModel.allocateResourceToBeneficiary(match.beneficiary, cause)
+                }
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+fun MatchRecommendationCard(
+    recommendation: MatchRecommendation,
+    onAssignVolunteer: () -> Unit,
+    onAllocateResource: () -> Unit
+) {
+    val ben = recommendation.beneficiary
+    val vol = recommendation.recommendedVolunteer
+    val don = recommendation.recommendedDonation
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = ben.fullName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(text = "Area: ${ben.area} • Urgency: ${ben.urgency}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = "${recommendation.matchScore}% Match",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Column(modifier = Modifier.padding(10.dp)) {
+                    Text(text = "Needed: ${ben.assistanceNeeded}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    if (vol != null) {
+                        Text(text = "Suggested Volunteer: ${vol.fullName} (${vol.area} - ${vol.skills})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                    if (don != null) {
+                        Text(text = "Suggested Resource Fund: R${"%.0f".format(don.amount)} (${don.cause})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+                    }
+                    Text(text = "Match Reasons: ${recommendation.matchReasons.joinToString(" • ")}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                OutlinedButton(
+                    onClick = onAssignVolunteer,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Assign Volunteer", fontSize = 12.sp)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = onAllocateResource,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Allocate Resource", fontSize = 12.sp)
+                }
+            }
+        }
+    }
+}
+
 // --- VOLUNTEERS TABLE TAB ---
 @Composable
 fun VolunteersTableTab(
     volunteersList: List<VolunteerEntity>,
     viewModel: AdminViewModel
 ) {
+    val context = LocalContext.current
     val extendedColors = LocalExtendedColors.current
 
     Column {
@@ -711,7 +889,7 @@ fun VolunteersTableTab(
                 fontWeight = FontWeight.Bold
             )
             Button(
-                onClick = { viewModel.exportTableToCsv("Volunteers") },
+                onClick = { viewModel.exportTableToCsv(context, "Volunteers") },
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -765,6 +943,8 @@ fun DonationsTableTab(
     donationsList: List<DonationEntity>,
     viewModel: AdminViewModel
 ) {
+    val context = LocalContext.current
+
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -777,7 +957,7 @@ fun DonationsTableTab(
                 fontWeight = FontWeight.Bold
             )
             Button(
-                onClick = { viewModel.exportTableToCsv("Donations") },
+                onClick = { viewModel.exportTableToCsv(context, "Donations") },
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -825,6 +1005,8 @@ fun BeneficiariesTableTab(
     beneficiariesList: List<BeneficiaryEntity>,
     viewModel: AdminViewModel
 ) {
+    val context = LocalContext.current
+
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -837,7 +1019,7 @@ fun BeneficiariesTableTab(
                 fontWeight = FontWeight.Bold
             )
             Button(
-                onClick = { viewModel.exportTableToCsv("Beneficiaries") },
+                onClick = { viewModel.exportTableToCsv(context, "Beneficiaries") },
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -907,19 +1089,21 @@ fun BeneficiariesTableTab(
     }
 }
 
-// --- REPORTS TAB WITH 6 PDF GENERATION CARDS ---
+// --- REPORTS TAB WITH 6 OFFICIAL PDF GENERATION CARDS ---
 @Composable
 fun ReportsTab(
     reportsList: List<ReportEntity>,
     viewModel: AdminViewModel
 ) {
+    val context = LocalContext.current
+
     val pdfCards = listOf(
-        "Annual Community Impact Assessment 2024",
-        "Q3 Financial Audit Ledger & Donor Statement",
-        "Kuils River Community Needs Field Survey",
-        "POPIA Privacy & Compliance Security Log",
-        "Hanover Park Kitchen Operations Report",
-        "Youth Literacy & After-School Program Audit"
+        Triple("Volunteer Activity Report", "Volunteer Management", "Activity roster, skills breakdown, and area coverage metrics for all registered volunteers."),
+        Triple("Donation Summary Report", "Financial Audit", "Verifiable donation ledger accounting for all public donations and payment gateway receipts in ZAR."),
+        Triple("Beneficiary Assistance Report", "Assistance Dispatch", "Full log of beneficiary applications, urgency levels, family sizes, and fulfillment statuses."),
+        Triple("Community Needs Report", "Field Assessment", "Comprehensive community needs survey covering food insecurity, winter relief, and education."),
+        Triple("Monthly Statistics & Trends Report", "Annual Trends", "High-level impact counters, volunteer growth trends, and food parcel distribution statistics."),
+        Triple("POPIA Compliance & Audit Report", "Legal & Security", "POPIA Act 4 of 2013 compliance verification, consent timestamps, and data encryption log.")
     )
 
     Column {
@@ -936,7 +1120,7 @@ fun ReportsTab(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        pdfCards.forEach { title ->
+        pdfCards.forEach { (title, type, summary) ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -952,11 +1136,14 @@ fun ReportsTab(
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Rounded.PictureAsPdf, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(text = title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                        Column {
+                            Text(text = title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            Text(text = type, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        }
                     }
 
                     Button(
-                        onClick = { viewModel.generatePdfReport(title) },
+                        onClick = { viewModel.generatePdfReport(context, title, type, summary) },
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Text("Generate PDF")

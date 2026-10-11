@@ -1,8 +1,6 @@
 package com.example.aurorah.ui.impact
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,11 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Download
@@ -32,7 +30,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -44,10 +41,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.aurorah.data.local.entity.ReportEntity
@@ -56,6 +52,7 @@ import com.example.aurorah.data.local.entity.ReportEntity
 fun ImpactNewsScreen(
     viewModel: ImpactViewModel
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val reportsList by viewModel.reportsList.collectAsState()
 
@@ -115,7 +112,7 @@ fun ImpactNewsScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.triggerReportDownload(report.title)
+                        viewModel.triggerReportDownload(context, report)
                         viewModel.dismissReportModal()
                     }
                 ) {
@@ -142,8 +139,23 @@ fun ImpactNewsScreen(
             title = { Text("PDF Download Initiated", fontWeight = FontWeight.Bold) },
             text = { Text(notification) },
             confirmButton = {
-                Button(onClick = { viewModel.dismissDownloadMessage() }) {
-                    Text("OK")
+                Row {
+                    if (uiState.downloadedPdfFile != null) {
+                        Button(
+                            onClick = {
+                                viewModel.openDownloadedPdf(context)
+                                viewModel.dismissDownloadMessage()
+                            }
+                        ) {
+                            Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Open PDF")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    OutlinedButton(onClick = { viewModel.dismissDownloadMessage() }) {
+                        Text("Close")
+                    }
                 }
             }
         )
@@ -241,7 +253,7 @@ fun ImpactNewsScreen(
                 ReportCardItem(
                     report = report,
                     onViewSummary = { viewModel.selectReport(report) },
-                    onDownloadPdf = { viewModel.triggerReportDownload(report.title) }
+                    onDownloadPdf = { viewModel.triggerReportDownload(context, report) }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }

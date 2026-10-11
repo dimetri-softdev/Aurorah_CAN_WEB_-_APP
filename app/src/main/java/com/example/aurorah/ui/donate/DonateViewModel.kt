@@ -1,15 +1,18 @@
 package com.example.aurorah.ui.donate
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.aurorah.data.local.entity.DonationEntity
 import com.example.aurorah.data.repository.AurorahRepository
+import com.example.aurorah.util.PaymentGatewayManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -27,6 +30,7 @@ data class DonateUiState(
     val popiaConsented: Boolean = false,
     val isProcessing: Boolean = false,
     val receiptData: DonationEntity? = null,
+    val receiptPdfFile: File? = null,
     val errorMessage: String? = null
 )
 
@@ -87,7 +91,7 @@ class DonateViewModel(
         _uiState.value = _uiState.value.copy(popiaConsented = consented, errorMessage = null)
     }
 
-    fun processDonation() {
+    fun processDonation(context: Context) {
         val state = _uiState.value
         val amount = state.customAmountText.toDoubleOrNull() ?: 0.0
 
@@ -130,11 +134,19 @@ class DonateViewModel(
             val id = repository.insertDonation(donation)
             val savedDonation = donation.copy(id = id.toInt())
 
+            val pdfFile = PaymentGatewayManager.generateSection18aReceiptPdf(context, savedDonation)
+
             _uiState.value = state.copy(
                 isProcessing = false,
-                receiptData = savedDonation
+                receiptData = savedDonation,
+                receiptPdfFile = pdfFile
             )
         }
+    }
+
+    fun openTaxReceiptPdf(context: Context) {
+        val file = _uiState.value.receiptPdfFile ?: return
+        PaymentGatewayManager.openTaxReceiptPdf(context, file)
     }
 
     fun dismissReceipt() {

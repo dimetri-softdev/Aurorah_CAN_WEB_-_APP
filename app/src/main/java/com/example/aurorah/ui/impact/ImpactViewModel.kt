@@ -1,19 +1,25 @@
 package com.example.aurorah.ui.impact
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.aurorah.data.local.entity.ReportEntity
 import com.example.aurorah.data.repository.AurorahRepository
+import com.example.aurorah.util.PdfReportManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import java.io.File
 
 data class ImpactUiState(
     val selectedReport: ReportEntity? = null,
-    val downloadNotificationMessage: String? = null
+    val downloadNotificationMessage: String? = null,
+    val downloadedPdfFile: File? = null
 )
 
 class ImpactViewModel(
@@ -45,14 +51,39 @@ class ImpactViewModel(
         _uiState.value = _uiState.value.copy(selectedReport = null)
     }
 
-    fun triggerReportDownload(title: String) {
-        _uiState.value = _uiState.value.copy(
-            downloadNotificationMessage = "Generating & downloading $title (PDF)..."
-        )
+    fun triggerReportDownload(context: Context, report: ReportEntity) {
+        viewModelScope.launch {
+            val vols = repository.getAllVolunteers().first()
+            val dons = repository.getAllDonations().first()
+            val bens = repository.getAllBeneficiaries().first()
+
+            val pdfFile = PdfReportManager.generateReportPdf(
+                context = context,
+                reportTitle = report.title,
+                reportType = report.type,
+                summary = report.summary,
+                volunteers = vols,
+                donations = dons,
+                beneficiaries = bens
+            )
+
+            _uiState.value = _uiState.value.copy(
+                downloadedPdfFile = pdfFile,
+                downloadNotificationMessage = if (pdfFile != null) "Successfully compiled ${report.title} (PDF)." else "Downloaded ${report.title}."
+            )
+        }
+    }
+
+    fun openDownloadedPdf(context: Context) {
+        val file = _uiState.value.downloadedPdfFile ?: return
+        PdfReportManager.openPdfFile(context, file)
     }
 
     fun dismissDownloadMessage() {
-        _uiState.value = _uiState.value.copy(downloadNotificationMessage = null)
+        _uiState.value = _uiState.value.copy(
+            downloadNotificationMessage = null,
+            downloadedPdfFile = null
+        )
     }
 
     class Factory(private val repository: AurorahRepository) : ViewModelProvider.Factory {
