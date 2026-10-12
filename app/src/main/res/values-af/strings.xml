@@ -10,11 +10,15 @@
     <string name="nav_request">Vra vir Hulp</string>
     <string name="nav_donate">Skenk</string>
     <string name="nav_impact">Impak &amp; Nuus</string>
+    <string name="nav_get_involved">Raak Betrokke</string>
+    <string name="nav_donate_impact">Skenk &amp; Impak</string>
     <string name="nav_admin_login">Admin Toegang</string>
     <string name="nav_admin_dashboard">Admin Kontroleskerm</string>
     <string name="nav_settings">Profiel &amp; Instellings</string>
     <string name="nav_login">Teken In</string>
     <string name="nav_register">Registreer</string>
+    <string name="admin_access_note_title">Admin Toegangsnota</string>
+    <string name="admin_access_note_desc">Admin Portal is managed on the web desktop platform at aurorahan.org/admin</string>
 
     <!-- Authentication -->
     <string name="login_title">Welkom Terug</string>

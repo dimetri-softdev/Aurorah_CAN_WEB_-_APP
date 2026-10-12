@@ -14,4 +14,14 @@ class AurorahApplication : Application() {
     val database by lazy { AppDatabase.getDatabase(this, applicationScope) }
     val userPreferences by lazy { UserPreferencesRepository(this) }
     val repository by lazy { AurorahRepository(database, userPreferences) }
+
+    override fun onCreate() {
+        super.onCreate()
+        instance = this
+    }
+
+    companion object {
+        lateinit var instance: AurorahApplication
+            private set
+    }
 }

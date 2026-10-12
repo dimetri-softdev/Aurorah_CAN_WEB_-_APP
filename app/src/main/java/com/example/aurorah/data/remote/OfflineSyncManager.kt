@@ -1,12 +1,6 @@
 package com.example.aurorah.data.remote
 
 import com.example.aurorah.data.local.AppDatabase
-import com.example.aurorah.data.local.entity.BeneficiaryEntity
-import com.example.aurorah.data.local.entity.CommunityNeedEntity
-import com.example.aurorah.data.local.entity.DonationEntity
-import com.example.aurorah.data.local.entity.NewsEntity
-import com.example.aurorah.data.local.entity.ReportEntity
-import com.example.aurorah.data.local.entity.VolunteerEntity
 import com.example.aurorah.data.remote.dto.toDto
 import com.example.aurorah.data.remote.dto.toEntity
 import kotlinx.coroutines.Dispatchers
@@ -58,7 +52,7 @@ class OfflineSyncManager(
                 val status = AzureServerConnectionStatus(
                     isConnected = true,
                     isOnline = true,
-                    statusMessage = "Azure SQL REST Gateway Active ($RemoteConfig.DATABASE_NAME)",
+                    statusMessage = "Azure SQL Direct JDBC & REST Gateway Active ($RemoteConfig.DATABASE_NAME)",
                     lastCheckTimestamp = nowStr
                 )
                 _connectionStatusState.value = status
@@ -67,7 +61,7 @@ class OfflineSyncManager(
                 val status = AzureServerConnectionStatus(
                     isConnected = true,
                     isOnline = true,
-                    statusMessage = "Azure SQL Database ($RemoteConfig.SERVER_NAME / $RemoteConfig.DATABASE_NAME) - Ready (Room Sync Active)",
+                    statusMessage = "Azure SQL Database ($RemoteConfig.SERVER_NAME / $RemoteConfig.DATABASE_NAME) - Ready",
                     lastCheckTimestamp = nowStr
                 )
                 _connectionStatusState.value = status
@@ -107,6 +101,11 @@ class OfflineSyncManager(
                 }
             }
 
+            // Direct JDBC Sync to Azure SQL
+            for (localVol in localVolunteers) {
+                AzureSqlDatabaseClient.insertVolunteer(localVol)
+            }
+
             // 2. Sync Beneficiaries
             val localBeneficiaries = database.beneficiaryDao().getAllBeneficiaries().firstOrNull() ?: emptyList()
             try {
@@ -124,6 +123,11 @@ class OfflineSyncManager(
                 }
             }
 
+            // Direct JDBC Sync to Azure SQL
+            for (localBen in localBeneficiaries) {
+                AzureSqlDatabaseClient.insertBeneficiary(localBen)
+            }
+
             // 3. Sync Donations
             val localDonations = database.donationDao().getAllDonations().firstOrNull() ?: emptyList()
             try {
@@ -139,6 +143,11 @@ class OfflineSyncManager(
                     } catch (_: Exception) { }
                     totalSynced++
                 }
+            }
+
+            // Direct JDBC Sync to Azure SQL
+            for (localDon in localDonations) {
+                AzureSqlDatabaseClient.insertDonation(localDon)
             }
 
             // 4. Sync Community Needs
@@ -195,7 +204,7 @@ class OfflineSyncManager(
             val resultCount = if (totalSynced > 0) totalSynced else (localVolunteers.size + localBeneficiaries.size + localDonations.size + localNeeds.size + localNews.size + localReports.size)
             val result = SyncResult(
                 isSuccess = true,
-                message = "Successfully synced $resultCount records with $RemoteConfig.SERVER_NAME ($RemoteConfig.DATABASE_NAME)",
+                message = "Successfully synced $resultCount records with $RemoteConfig.SERVER_NAME ($RemoteConfig.DATABASE_NAME) via Direct Azure SQL JDBC",
                 itemsSyncedCount = resultCount,
                 timestamp = nowStr
             )

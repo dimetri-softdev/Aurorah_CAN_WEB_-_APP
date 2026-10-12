@@ -1,5 +1,10 @@
 package com.example.aurorah.data.repository
 
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import android.widget.Toast
+import com.example.aurorah.AurorahApplication
 import com.example.aurorah.data.local.AppDatabase
 import com.example.aurorah.data.local.entity.AdminEntity
 import com.example.aurorah.data.local.entity.BeneficiaryEntity
@@ -11,20 +16,57 @@ import com.example.aurorah.data.local.entity.VolunteerEntity
 import com.example.aurorah.data.preferences.UserPreferencesRepository
 import com.example.aurorah.data.preferences.UserSession
 import com.example.aurorah.data.remote.AzureServerConnectionStatus
+import com.example.aurorah.data.remote.AzureSqlDatabaseClient
+import com.example.aurorah.data.remote.AzureSqlResult
 import com.example.aurorah.data.remote.OfflineSyncManager
 import com.example.aurorah.data.remote.SyncResult
 import com.example.aurorah.ui.theme.ThemeMode
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class AurorahRepository(
     private val database: AppDatabase,
     private val userPreferences: UserPreferencesRepository,
     private val offlineSyncManager: OfflineSyncManager = OfflineSyncManager()
 ) {
+    // --- Azure SQL Status & Operation Feedback ---
+    private val _azureSqlOperationStatus = MutableStateFlow<AzureSqlResult<String>?>(null)
+    val azureSqlOperationStatus: StateFlow<AzureSqlResult<String>?> = _azureSqlOperationStatus.asStateFlow()
+
     // --- Remote Sync & Network Layer ---
     val azureConnectionStatusFlow: StateFlow<AzureServerConnectionStatus> = offlineSyncManager.connectionStatusState
     val syncResultFlow: StateFlow<SyncResult> = offlineSyncManager.syncResultState
+
+    private fun handleAzureSqlOperation(result: AzureSqlResult<Boolean>, entityName: String) {
+        val mappedResult: AzureSqlResult<String> = when (result) {
+            is AzureSqlResult.Success -> {
+                Log.d("AurorahRepository", "Azure SQL $entityName Insert Success: ${result.message}")
+                showToast("Azure SQL: $entityName saved successfully to Azure Cloud Database")
+                AzureSqlResult.Success(result.data.toString(), "Azure SQL Success: $entityName saved to Cloud DB")
+            }
+            is AzureSqlResult.Error -> {
+                Log.e("AurorahRepository", "Azure SQL $entityName Insert Failed (FirewallBlocked=${result.isFirewallBlocked}): ${result.message}")
+                showToast(result.message)
+                result
+            }
+        }
+        _azureSqlOperationStatus.value = mappedResult
+    }
+
+    private fun showToast(msg: String) {
+        try {
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(AurorahApplication.instance, msg, Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            Log.e("AurorahRepository", "Toast display error: ${e.message}")
+        }
+    }
 
     suspend fun syncWithRemote(): SyncResult {
         val result = offlineSyncManager.syncAllData(database)
@@ -43,20 +85,47 @@ class AurorahRepository(
     suspend fun getAdminByUsername(username: String): AdminEntity? = database.adminDao().getAdminByUsername(username)
     suspend fun getAdminByEmailOrUsername(emailOrUsername: String): AdminEntity? =
         database.adminDao().getAdminByEmailOrUsername(emailOrUsername, emailOrUsername)
-    suspend fun insertAdmin(admin: AdminEntity): Long = database.adminDao().insert(admin)
+
+    suspend fun insertAdmin(admin: AdminEntity): Long {
+        val id = database.adminDao().insert(admin)
+        CoroutineScope(Dispatchers.IO).launch {
+            val res = AzureSqlDatabaseClient.insertUser(admin)
+            handleAzureSqlOperation(res, "User / Admin ($admin.username)")
+        }
+        return id
+    }
+
     suspend fun updateAdminLastLogin(id: Int, lastLogin: String) = database.adminDao().updateLastLogin(id, lastLogin)
 
     // --- Volunteers ---
     fun getAllVolunteers(): Flow<List<VolunteerEntity>> = database.volunteerDao().getAllVolunteers()
     fun getVolunteerById(id: Int): Flow<VolunteerEntity?> = database.volunteerDao().getVolunteerById(id)
-    suspend fun insertVolunteer(volunteer: VolunteerEntity): Long = database.volunteerDao().insert(volunteer)
+
+    suspend fun insertVolunteer(volunteer: VolunteerEntity): Long {
+        val id = database.volunteerDao().insert(volunteer)
+        CoroutineScope(Dispatchers.IO).launch {
+            val res = AzureSqlDatabaseClient.insertVolunteer(volunteer)
+            handleAzureSqlOperation(res, "Volunteer (${volunteer.fullName})")
+        }
+        return id
+    }
+
     suspend fun updateVolunteer(volunteer: VolunteerEntity) = database.volunteerDao().update(volunteer)
     suspend fun deleteVolunteer(volunteer: VolunteerEntity) = database.volunteerDao().delete(volunteer)
 
     // --- Beneficiaries ---
     fun getAllBeneficiaries(): Flow<List<BeneficiaryEntity>> = database.beneficiaryDao().getAllBeneficiaries()
     fun getBeneficiaryById(id: Int): Flow<BeneficiaryEntity?> = database.beneficiaryDao().getBeneficiaryById(id)
-    suspend fun insertBeneficiary(beneficiary: BeneficiaryEntity): Long = database.beneficiaryDao().insert(beneficiary)
+
+    suspend fun insertBeneficiary(beneficiary: BeneficiaryEntity): Long {
+        val id = database.beneficiaryDao().insert(beneficiary)
+        CoroutineScope(Dispatchers.IO).launch {
+            val res = AzureSqlDatabaseClient.insertBeneficiary(beneficiary)
+            handleAzureSqlOperation(res, "Beneficiary / Assistance Request (${beneficiary.fullName})")
+        }
+        return id
+    }
+
     suspend fun updateBeneficiary(beneficiary: BeneficiaryEntity) = database.beneficiaryDao().update(beneficiary)
     suspend fun deleteBeneficiary(beneficiary: BeneficiaryEntity) = database.beneficiaryDao().delete(beneficiary)
 
@@ -69,7 +138,16 @@ class AurorahRepository(
     // --- Donations ---
     fun getAllDonations(): Flow<List<DonationEntity>> = database.donationDao().getAllDonations()
     fun getDonationById(id: Int): Flow<DonationEntity?> = database.donationDao().getDonationById(id)
-    suspend fun insertDonation(donation: DonationEntity): Long = database.donationDao().insert(donation)
+
+    suspend fun insertDonation(donation: DonationEntity): Long {
+        val id = database.donationDao().insert(donation)
+        CoroutineScope(Dispatchers.IO).launch {
+            val res = AzureSqlDatabaseClient.insertDonation(donation)
+            handleAzureSqlOperation(res, "Donation (${donation.donorName} - R${donation.amount})")
+        }
+        return id
+    }
+
     fun getTotalDonationsAmount(): Flow<Double?> = database.donationDao().getTotalDonationsAmount()
 
     // --- Reports ---

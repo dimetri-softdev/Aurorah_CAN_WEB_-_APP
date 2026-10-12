@@ -12,8 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.AdminPanelSettings
-import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
@@ -87,8 +85,6 @@ fun AurorahAppShell() {
     val authViewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory(repository))
     val adminViewModel: AdminViewModel = viewModel(factory = AdminViewModel.Factory(repository))
 
-    val userSession by authViewModel.userSessionState.collectAsState()
-
     // Navigation 3 Backstack
     val backStack = rememberNavBackStack(AurorahRoute.Home)
     val currentRoute = backStack.lastOrNull() ?: AurorahRoute.Home
@@ -135,7 +131,7 @@ fun AurorahAppShell() {
                     }
                 },
                 navigationIcon = {
-                    if (backStack.size > 1 && currentRoute !in listOf(AurorahRoute.Home, AurorahRoute.About, AurorahRoute.Volunteer, AurorahRoute.ImpactNews, AurorahRoute.Settings)) {
+                    if (backStack.size > 1 && currentRoute !in listOf(AurorahRoute.Home, AurorahRoute.About, AurorahRoute.Volunteer, AurorahRoute.Donate, AurorahRoute.ImpactNews, AurorahRoute.Settings)) {
                         IconButton(onClick = { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
@@ -220,7 +216,7 @@ fun AurorahAppShell() {
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary)
                 )
 
-                // Volunteer / Forms
+                // Get Involved / Forms
                 NavigationBarItem(
                     selected = currentRoute is AurorahRoute.Volunteer || currentRoute is AurorahRoute.RequestAssistance,
                     onClick = {
@@ -230,51 +226,38 @@ fun AurorahAppShell() {
                             backStack.add(AurorahRoute.Volunteer)
                         }
                     },
-                    icon = { Icon(Icons.Rounded.VolunteerActivism, contentDescription = stringResource(R.string.nav_volunteer)) },
-                    label = { Text("Volunteer") },
+                    icon = { Icon(Icons.Rounded.VolunteerActivism, contentDescription = stringResource(R.string.nav_get_involved)) },
+                    label = { Text(stringResource(R.string.nav_get_involved)) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary)
                 )
 
-                // Impact & News
+                // Donate & Impact
                 NavigationBarItem(
-                    selected = currentRoute is AurorahRoute.ImpactNews,
+                    selected = currentRoute is AurorahRoute.Donate || currentRoute is AurorahRoute.ImpactNews,
                     onClick = {
-                        if (currentRoute !is AurorahRoute.ImpactNews) {
+                        if (currentRoute !is AurorahRoute.Donate) {
                             backStack.clear()
                             backStack.add(AurorahRoute.Home)
-                            backStack.add(AurorahRoute.ImpactNews)
+                            backStack.add(AurorahRoute.Donate)
                         }
                     },
-                    icon = { Icon(Icons.Rounded.Assessment, contentDescription = stringResource(R.string.nav_impact)) },
-                    label = { Text("Impact") },
+                    icon = { Icon(Icons.Rounded.Favorite, contentDescription = stringResource(R.string.nav_donate_impact)) },
+                    label = { Text(stringResource(R.string.nav_donate_impact)) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary)
                 )
 
-                // Admin / Profile
+                // Profile & Settings
                 NavigationBarItem(
-                    selected = currentRoute is AurorahRoute.AdminDashboard || currentRoute is AurorahRoute.Login || currentRoute is AurorahRoute.Register,
+                    selected = currentRoute is AurorahRoute.Settings || currentRoute is AurorahRoute.Login || currentRoute is AurorahRoute.Register,
                     onClick = {
-                        if (userSession.isLoggedIn && (userSession.role.contains("Admin") || userSession.username == "latifah")) {
-                            if (currentRoute !is AurorahRoute.AdminDashboard) {
-                                backStack.clear()
-                                backStack.add(AurorahRoute.Home)
-                                backStack.add(AurorahRoute.AdminDashboard)
-                            }
-                        } else {
-                            if (currentRoute !is AurorahRoute.Login) {
-                                backStack.clear()
-                                backStack.add(AurorahRoute.Home)
-                                backStack.add(AurorahRoute.Login)
-                            }
+                        if (currentRoute !is AurorahRoute.Settings) {
+                            backStack.clear()
+                            backStack.add(AurorahRoute.Home)
+                            backStack.add(AurorahRoute.Settings)
                         }
                     },
-                    icon = {
-                        Icon(
-                            imageVector = if (userSession.isLoggedIn) Icons.Rounded.AdminPanelSettings else Icons.Rounded.Person,
-                            contentDescription = "Portal"
-                        )
-                    },
-                    label = { Text(if (userSession.isLoggedIn) "Admin" else "Login") },
+                    icon = { Icon(Icons.Rounded.Person, contentDescription = stringResource(R.string.nav_settings)) },
+                    label = { Text(stringResource(R.string.nav_settings)) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary)
                 )
             }
@@ -347,7 +330,7 @@ fun AurorahAppShell() {
                                 onLoginSuccess = {
                                     backStack.clear()
                                     backStack.add(AurorahRoute.Home)
-                                    backStack.add(AurorahRoute.AdminDashboard)
+                                    backStack.add(AurorahRoute.Settings)
                                 }
                             )
                         }

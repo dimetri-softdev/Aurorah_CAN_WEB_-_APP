@@ -10,11 +10,15 @@
     <string name="nav_request">Cela Uncedo</string>
     <string name="nav_donate">Faka Isandla</string>
     <string name="nav_impact">Impembelelo neIndaba</string>
+    <string name="nav_get_involved">Thatha Inxaxheba</string>
+    <string name="nav_donate_impact">Faka Isandla Nempembelelo</string>
     <string name="nav_admin_login">Isebe Lomlawuli</string>
     <string name="nav_admin_dashboard">Ibhodi Yomlawuli</string>
     <string name="nav_settings">Iprofayile Neesetingi</string>
     <string name="nav_login">Ngena</string>
     <string name="nav_register">Bhalisa</string>
+    <string name="admin_access_note_title">Inqaku Lokungena Kolawulo</string>
+    <string name="admin_access_note_desc">Admin Portal is managed on the web desktop platform at aurorahan.org/admin</string>
 
     <!-- Authentication -->
     <string name="login_title">Wamkelekile Kwakhona</string>

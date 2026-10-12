@@ -10,11 +10,15 @@
     <string name="nav_request">Request Assistance</string>
     <string name="nav_donate">Donate</string>
     <string name="nav_impact">Impact &amp; News</string>
+    <string name="nav_get_involved">Get Involved</string>
+    <string name="nav_donate_impact">Donate &amp; Impact</string>
     <string name="nav_admin_login">Admin Access</string>
     <string name="nav_admin_dashboard">Admin Dashboard</string>
     <string name="nav_settings">Profile &amp; Settings</string>
     <string name="nav_login">Login</string>
     <string name="nav_register">Register</string>
+    <string name="admin_access_note_title">Admin Access Note</string>
+    <string name="admin_access_note_desc">Admin Portal is managed on the web desktop platform at aurorahan.org/admin</string>
 
     <!-- Authentication -->
     <string name="login_title">Welcome Back</string>

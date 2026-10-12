@@ -35,9 +35,19 @@ android {
     buildFeatures {
         compose = true
     }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/NOTICE.md"
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/INDEX.LIST"
+        }
+    }
 }
 
 dependencies {
+    implementation(libs.mssql.jdbc)
+    implementation(libs.jtds)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.activity.compose)
