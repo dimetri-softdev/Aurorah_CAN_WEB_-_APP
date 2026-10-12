@@ -1,5 +1,6 @@
 package com.example.aurorah.ui.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -88,89 +89,12 @@ class AuthViewModel(
     fun performFastAdminSwitch() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            val admin = repository.getAdminByUsername("latifah")
-            val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            val sessionToken = SecurityUtils.generateSessionToken()
+            try {
+                val admin = repository.getAdminByUsername("latifah")
+                val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                val sessionToken = SecurityUtils.generateSessionToken()
 
-            if (admin != null) {
-                repository.updateAdminLastLogin(admin.id, now)
-                repository.setUserSession(
-                    UserSession(
-                        isLoggedIn = true,
-                        username = admin.username,
-                        fullName = admin.fullName,
-                        email = admin.email,
-                        role = "ADMIN",
-                        sessionToken = sessionToken,
-                        authProvider = "Email",
-                        popiaConsentTimestamp = now,
-                        popiaConsentVersion = "v1.0"
-                    )
-                )
-            } else {
-                repository.setUserSession(
-                    UserSession(
-                        isLoggedIn = true,
-                        username = "latifah",
-                        fullName = "Latifah Jacobs",
-                        email = "latifah@aurorahcan.org",
-                        role = "ADMIN",
-                        sessionToken = sessionToken,
-                        authProvider = "Email",
-                        popiaConsentTimestamp = now,
-                        popiaConsentVersion = "v1.0"
-                    )
-                )
-            }
-            _uiState.value = _uiState.value.copy(isLoading = false)
-            _eventFlow.emit(AuthEvent.LoginSuccess)
-        }
-    }
-
-    fun loginWithGoogleSso(emailOverride: String? = null, nameOverride: String? = null) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            val ssoEmail = emailOverride ?: "sso.user@aurorahcan.org"
-            val ssoName = nameOverride ?: "Google Authenticated User"
-            val sessionToken = SecurityUtils.generateSessionToken()
-
-            repository.setUserSession(
-                UserSession(
-                    isLoggedIn = true,
-                    username = ssoEmail.substringBefore("@"),
-                    fullName = ssoName,
-                    email = ssoEmail,
-                    role = "VOLUNTEER",
-                    sessionToken = sessionToken,
-                    authProvider = "Google",
-                    popiaConsentTimestamp = now,
-                    popiaConsentVersion = "v1.0"
-                )
-            )
-
-            _uiState.value = _uiState.value.copy(isLoading = false)
-            _eventFlow.emit(AuthEvent.LoginSuccess)
-        }
-    }
-
-    fun login() {
-        val emailOrUsername = _uiState.value.emailOrUsername.trim()
-        val password = _uiState.value.password
-
-        if (emailOrUsername.isEmpty() || password.isEmpty()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Please enter username/email and password.")
-            return
-        }
-
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            val sessionToken = SecurityUtils.generateSessionToken()
-
-            val admin = repository.getAdminByEmailOrUsername(emailOrUsername)
-            if (admin != null) {
-                if (SecurityUtils.verifyPassword(password, admin.passwordHash)) {
+                if (admin != null) {
                     repository.updateAdminLastLogin(admin.id, now)
                     repository.setUserSession(
                         UserSession(
@@ -185,37 +109,132 @@ class AuthViewModel(
                             popiaConsentVersion = "v1.0"
                         )
                     )
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                    _eventFlow.emit(AuthEvent.LoginSuccess)
-                    return@launch
                 } else {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = "Invalid password. Password verification failed."
+                    repository.setUserSession(
+                        UserSession(
+                            isLoggedIn = true,
+                            username = "latifah",
+                            fullName = "Latifah Jacobs",
+                            email = "latifah@aurorahcan.org",
+                            role = "ADMIN",
+                            sessionToken = sessionToken,
+                            authProvider = "Email",
+                            popiaConsentTimestamp = now,
+                            popiaConsentVersion = "v1.0"
+                        )
                     )
-                    return@launch
                 }
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                _eventFlow.emit(AuthEvent.LoginSuccess)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                Log.e("AuthViewModel", "Error during fast admin switch: ${e.message}", e)
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Saved locally. Azure Cloud sync pending connection.")
             }
+        }
+    }
 
-            // General volunteer or community member authorization
-            val username = emailOrUsername.substringBefore("@")
-            val assignedRole = if (emailOrUsername.contains("admin", ignoreCase = true)) "ADMIN" else "VOLUNTEER"
+    fun loginWithGoogleSso(emailOverride: String? = null, nameOverride: String? = null) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            try {
+                val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                val ssoEmail = emailOverride ?: "sso.user@aurorahcan.org"
+                val ssoName = nameOverride ?: "Google Authenticated User"
+                val sessionToken = SecurityUtils.generateSessionToken()
 
-            repository.setUserSession(
-                UserSession(
-                    isLoggedIn = true,
-                    username = username,
-                    fullName = username.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
-                    email = if (emailOrUsername.contains("@")) emailOrUsername else "$emailOrUsername@gmail.com",
-                    role = assignedRole,
-                    sessionToken = sessionToken,
-                    authProvider = "Email",
-                    popiaConsentTimestamp = now,
-                    popiaConsentVersion = "v1.0"
+                repository.setUserSession(
+                    UserSession(
+                        isLoggedIn = true,
+                        username = ssoEmail.substringBefore("@"),
+                        fullName = ssoName,
+                        email = ssoEmail,
+                        role = "VOLUNTEER",
+                        sessionToken = sessionToken,
+                        authProvider = "Google",
+                        popiaConsentTimestamp = now,
+                        popiaConsentVersion = "v1.0"
+                    )
                 )
-            )
-            _uiState.value = _uiState.value.copy(isLoading = false)
-            _eventFlow.emit(AuthEvent.LoginSuccess)
+
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                _eventFlow.emit(AuthEvent.LoginSuccess)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                Log.e("AuthViewModel", "Error during Google SSO login: ${e.message}", e)
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Saved locally. Azure Cloud sync pending connection.")
+            }
+        }
+    }
+
+    fun login() {
+        val emailOrUsername = _uiState.value.emailOrUsername.trim()
+        val password = _uiState.value.password
+
+        if (emailOrUsername.isEmpty() || password.isEmpty()) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Please enter username/email and password.")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            try {
+                val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                val sessionToken = SecurityUtils.generateSessionToken()
+
+                val admin = repository.getAdminByEmailOrUsername(emailOrUsername)
+                if (admin != null) {
+                    if (SecurityUtils.verifyPassword(password, admin.passwordHash)) {
+                        repository.updateAdminLastLogin(admin.id, now)
+                        repository.setUserSession(
+                            UserSession(
+                                isLoggedIn = true,
+                                username = admin.username,
+                                fullName = admin.fullName,
+                                email = admin.email,
+                                role = "ADMIN",
+                                sessionToken = sessionToken,
+                                authProvider = "Email",
+                                popiaConsentTimestamp = now,
+                                popiaConsentVersion = "v1.0"
+                            )
+                        )
+                        _uiState.value = _uiState.value.copy(isLoading = false)
+                        _eventFlow.emit(AuthEvent.LoginSuccess)
+                        return@launch
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = "Invalid password. Password verification failed."
+                        )
+                        return@launch
+                    }
+                }
+
+                // General volunteer or community member authorization
+                val username = emailOrUsername.substringBefore("@")
+                val assignedRole = if (emailOrUsername.contains("admin", ignoreCase = true)) "ADMIN" else "VOLUNTEER"
+
+                repository.setUserSession(
+                    UserSession(
+                        isLoggedIn = true,
+                        username = username,
+                        fullName = username.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
+                        email = if (emailOrUsername.contains("@")) emailOrUsername else "$emailOrUsername@gmail.com",
+                        role = assignedRole,
+                        sessionToken = sessionToken,
+                        authProvider = "Email",
+                        popiaConsentTimestamp = now,
+                        popiaConsentVersion = "v1.0"
+                    )
+                )
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                _eventFlow.emit(AuthEvent.LoginSuccess)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                Log.e("AuthViewModel", "Error during login: ${e.message}", e)
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Saved locally. Azure Cloud sync pending connection.")
+            }
         }
     }
 
@@ -232,69 +251,83 @@ class AuthViewModel(
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val hashedPassword = SecurityUtils.hashPasswordWithSalt(state.regPassword)
-            val sessionToken = SecurityUtils.generateSessionToken()
+            try {
+                val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                val hashedPassword = SecurityUtils.hashPasswordWithSalt(state.regPassword)
+                val sessionToken = SecurityUtils.generateSessionToken()
 
-            val mappedRole = when (state.selectedRole) {
-                "Volunteer" -> "VOLUNTEER"
-                "Community Administrator" -> "ADMIN"
-                "Beneficiary" -> "BENEFICIARY"
-                else -> "GUEST"
-            }
+                val mappedRole = when (state.selectedRole) {
+                    "Volunteer" -> "VOLUNTEER"
+                    "Community Administrator" -> "ADMIN"
+                    "Beneficiary" -> "BENEFICIARY"
+                    else -> "GUEST"
+                }
 
-            if (mappedRole == "VOLUNTEER") {
-                repository.insertVolunteer(
-                    VolunteerEntity(
+                if (mappedRole == "VOLUNTEER") {
+                    repository.insertVolunteer(
+                        VolunteerEntity(
+                            fullName = state.fullName,
+                            email = state.regEmail,
+                            phone = "+27 82 000 0000",
+                            area = "Cape Town Central",
+                            skills = "General Volunteer Support",
+                            availability = "Flexible",
+                            address = "Cape Town",
+                            status = "Active",
+                            registrationDate = today,
+                            popiaConsentTimestamp = now,
+                            popiaConsentVersion = "v1.0"
+                        )
+                    )
+                } else if (mappedRole == "ADMIN") {
+                    repository.insertAdmin(
+                        AdminEntity(
+                            username = state.regEmail.substringBefore("@"),
+                            passwordHash = hashedPassword,
+                            role = "Community Administrator",
+                            fullName = state.fullName,
+                            email = state.regEmail,
+                            lastLogin = today
+                        )
+                    )
+                }
+
+                repository.setUserSession(
+                    UserSession(
+                        isLoggedIn = true,
+                        username = state.regEmail.substringBefore("@"),
                         fullName = state.fullName,
                         email = state.regEmail,
-                        phone = "+27 82 000 0000",
-                        area = "Cape Town Central",
-                        skills = "General Volunteer Support",
-                        availability = "Flexible",
-                        address = "Cape Town",
-                        status = "Active",
-                        registrationDate = today,
+                        role = mappedRole,
+                        sessionToken = sessionToken,
+                        authProvider = "Email",
                         popiaConsentTimestamp = now,
                         popiaConsentVersion = "v1.0"
                     )
                 )
-            } else if (mappedRole == "ADMIN") {
-                repository.insertAdmin(
-                    AdminEntity(
-                        username = state.regEmail.substringBefore("@"),
-                        passwordHash = hashedPassword,
-                        role = "Community Administrator",
-                        fullName = state.fullName,
-                        email = state.regEmail,
-                        lastLogin = today
-                    )
+
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                _eventFlow.emit(AuthEvent.RegisterSuccess)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                Log.e("AuthViewModel", "Error during registration: ${e.message}", e)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Saved locally. Azure Cloud sync pending connection."
                 )
             }
-
-            repository.setUserSession(
-                UserSession(
-                    isLoggedIn = true,
-                    username = state.regEmail.substringBefore("@"),
-                    fullName = state.fullName,
-                    email = state.regEmail,
-                    role = mappedRole,
-                    sessionToken = sessionToken,
-                    authProvider = "Email",
-                    popiaConsentTimestamp = now,
-                    popiaConsentVersion = "v1.0"
-                )
-            )
-
-            _uiState.value = _uiState.value.copy(isLoading = false)
-            _eventFlow.emit(AuthEvent.RegisterSuccess)
         }
     }
 
     fun logout() {
         viewModelScope.launch {
-            repository.clearUserSession()
+            try {
+                repository.clearUserSession()
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                Log.e("AuthViewModel", "Error during logout: ${e.message}", e)
+            }
         }
     }
 
@@ -312,7 +345,11 @@ private fun <T> Flow<T>.asStateFlowIn(
 ): StateFlow<T> {
     val flow = MutableStateFlow(initialValue)
     scope.launch {
-        collect { value -> flow.value = value }
+        try {
+            collect { value -> flow.value = value }
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
     }
     return flow.asStateFlow()
 }

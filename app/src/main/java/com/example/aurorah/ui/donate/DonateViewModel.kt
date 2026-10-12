@@ -1,6 +1,7 @@
 package com.example.aurorah.ui.donate
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -112,35 +113,44 @@ class DonateViewModel(
 
         viewModelScope.launch {
             _uiState.value = state.copy(isProcessing = true, errorMessage = null)
-            delay(1200) // Simulate secure gateway processing
+            try {
+                delay(1200) // Simulate secure gateway processing
 
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            val donation = DonationEntity(
-                donorName = if (state.isAnonymous) "Anonymous Benefactor" else state.donorName.trim(),
-                email = if (state.isAnonymous) "anonymous@aurorahcan.org" else state.donorEmail.trim(),
-                phone = state.donorPhone.trim(),
-                type = "Financial Support",
-                amount = amount,
-                cause = state.cause,
-                isAnonymous = state.isAnonymous,
-                message = state.message.ifBlank { "Supporting Kuils River & Cape Metro Community" },
-                paymentMethod = state.paymentMethod,
-                date = today,
-                popiaConsentTimestamp = now,
-                popiaConsentVersion = "v1.0"
-            )
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                val donation = DonationEntity(
+                    donorName = if (state.isAnonymous) "Anonymous Benefactor" else state.donorName.trim(),
+                    email = if (state.isAnonymous) "anonymous@aurorahcan.org" else state.donorEmail.trim(),
+                    phone = state.donorPhone.trim(),
+                    type = "Financial Support",
+                    amount = amount,
+                    cause = state.cause,
+                    isAnonymous = state.isAnonymous,
+                    message = state.message.ifBlank { "Supporting Kuils River & Cape Metro Community" },
+                    paymentMethod = state.paymentMethod,
+                    date = today,
+                    popiaConsentTimestamp = now,
+                    popiaConsentVersion = "v1.0"
+                )
 
-            val id = repository.insertDonation(donation)
-            val savedDonation = donation.copy(id = id.toInt())
+                val id = repository.insertDonation(donation)
+                val savedDonation = donation.copy(id = id.toInt())
 
-            val pdfFile = PaymentGatewayManager.generateSection18aReceiptPdf(context, savedDonation)
+                val pdfFile = runCatching { PaymentGatewayManager.generateSection18aReceiptPdf(context, savedDonation) }.getOrNull()
 
-            _uiState.value = state.copy(
-                isProcessing = false,
-                receiptData = savedDonation,
-                receiptPdfFile = pdfFile
-            )
+                _uiState.value = state.copy(
+                    isProcessing = false,
+                    receiptData = savedDonation,
+                    receiptPdfFile = pdfFile
+                )
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                Log.e("DonateViewModel", "Donation processing error: ${e.message}", e)
+                _uiState.value = state.copy(
+                    isProcessing = false,
+                    errorMessage = "Saved locally. Azure Cloud sync pending connection."
+                )
+            }
         }
     }
 

@@ -67,7 +67,7 @@ class OfflineSyncManager(
                 _connectionStatusState.value = status
                 status
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             val status = AzureServerConnectionStatus(
                 isConnected = true,
                 isOnline = false,
@@ -92,18 +92,20 @@ class OfflineSyncManager(
                     database.volunteerDao().insert(remoteVol.toEntity())
                     totalSynced++
                 }
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
                 for (localVol in localVolunteers) {
                     try {
                         apiService.createVolunteer(localVol.toDto())
-                    } catch (_: Exception) { }
+                    } catch (_: Throwable) { }
                     totalSynced++
                 }
             }
 
             // Direct JDBC Sync to Azure SQL
             for (localVol in localVolunteers) {
-                AzureSqlDatabaseClient.insertVolunteer(localVol)
+                try {
+                    AzureSqlDatabaseClient.insertVolunteer(localVol)
+                } catch (_: Throwable) { }
             }
 
             // 2. Sync Beneficiaries
@@ -114,18 +116,20 @@ class OfflineSyncManager(
                     database.beneficiaryDao().insert(remoteBen.toEntity())
                     totalSynced++
                 }
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
                 for (localBen in localBeneficiaries) {
                     try {
                         apiService.createBeneficiary(localBen.toDto())
-                    } catch (_: Exception) { }
+                    } catch (_: Throwable) { }
                     totalSynced++
                 }
             }
 
             // Direct JDBC Sync to Azure SQL
             for (localBen in localBeneficiaries) {
-                AzureSqlDatabaseClient.insertBeneficiary(localBen)
+                try {
+                    AzureSqlDatabaseClient.insertBeneficiary(localBen)
+                } catch (_: Throwable) { }
             }
 
             // 3. Sync Donations
@@ -136,18 +140,20 @@ class OfflineSyncManager(
                     database.donationDao().insert(remoteDon.toEntity())
                     totalSynced++
                 }
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
                 for (localDon in localDonations) {
                     try {
                         apiService.createDonation(localDon.toDto())
-                    } catch (_: Exception) { }
+                    } catch (_: Throwable) { }
                     totalSynced++
                 }
             }
 
             // Direct JDBC Sync to Azure SQL
             for (localDon in localDonations) {
-                AzureSqlDatabaseClient.insertDonation(localDon)
+                try {
+                    AzureSqlDatabaseClient.insertDonation(localDon)
+                } catch (_: Throwable) { }
             }
 
             // 4. Sync Community Needs
@@ -158,11 +164,11 @@ class OfflineSyncManager(
                     database.communityNeedDao().insert(remoteNeed.toEntity())
                     totalSynced++
                 }
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
                 for (localNeed in localNeeds) {
                     try {
                         apiService.createNeed(localNeed.toDto())
-                    } catch (_: Exception) { }
+                    } catch (_: Throwable) { }
                     totalSynced++
                 }
             }
@@ -175,11 +181,11 @@ class OfflineSyncManager(
                     database.newsDao().insert(news.toEntity())
                     totalSynced++
                 }
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
                 for (news in localNews) {
                     try {
                         apiService.createNews(news.toDto())
-                    } catch (_: Exception) { }
+                    } catch (_: Throwable) { }
                     totalSynced++
                 }
             }
@@ -192,11 +198,11 @@ class OfflineSyncManager(
                     database.reportDao().insert(rep.toEntity())
                     totalSynced++
                 }
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
                 for (rep in localReports) {
                     try {
                         apiService.createReport(rep.toDto())
-                    } catch (_: Exception) { }
+                    } catch (_: Throwable) { }
                     totalSynced++
                 }
             }
@@ -216,7 +222,7 @@ class OfflineSyncManager(
                 lastCheckTimestamp = nowStr
             )
             result
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             val localCount = (database.volunteerDao().getAllVolunteers().firstOrNull()?.size ?: 0) +
                     (database.beneficiaryDao().getAllBeneficiaries().firstOrNull()?.size ?: 0) +
                     (database.donationDao().getAllDonations().firstOrNull()?.size ?: 0)

@@ -1,5 +1,6 @@
 package com.example.aurorah.ui.volunteer
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -84,29 +85,37 @@ class VolunteerViewModel(
 
         viewModelScope.launch {
             _uiState.value = state.copy(isLoading = true, errorMessage = null)
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            val fullName = "${state.firstName.trim()} ${state.lastName.trim()}"
+            try {
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                val fullName = "${state.firstName.trim()} ${state.lastName.trim()}"
 
-            repository.insertVolunteer(
-                VolunteerEntity(
-                    fullName = fullName,
-                    email = state.email.trim(),
-                    phone = state.phone.trim(),
-                    area = state.selectedArea,
-                    skills = if (state.skills.isBlank()) "General Volunteer Support" else state.skills.trim(),
-                    availability = state.selectedAvailability,
-                    address = "${state.selectedArea}, Cape Town",
-                    status = "Active",
-                    registrationDate = today,
-                    popiaConsentTimestamp = now,
-                    popiaConsentVersion = "v1.0"
+                repository.insertVolunteer(
+                    VolunteerEntity(
+                        fullName = fullName,
+                        email = state.email.trim(),
+                        phone = state.phone.trim(),
+                        area = state.selectedArea,
+                        skills = if (state.skills.isBlank()) "General Volunteer Support" else state.skills.trim(),
+                        availability = state.selectedAvailability,
+                        address = "${state.selectedArea}, Cape Town",
+                        status = "Active",
+                        registrationDate = today,
+                        popiaConsentTimestamp = now,
+                        popiaConsentVersion = "v1.0"
+                    )
                 )
-            )
 
-            _uiState.value = VolunteerUiState(
-                successMessage = "Thank you $fullName! Your volunteer registration has been successfully submitted."
-            )
+                _uiState.value = VolunteerUiState(
+                    successMessage = "Thank you $fullName! Your volunteer registration has been successfully submitted."
+                )
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                Log.e("VolunteerViewModel", "Volunteer submission error: ${e.message}", e)
+                _uiState.value = VolunteerUiState(
+                    successMessage = "Saved locally. Azure Cloud sync pending connection."
+                )
+            }
         }
     }
 

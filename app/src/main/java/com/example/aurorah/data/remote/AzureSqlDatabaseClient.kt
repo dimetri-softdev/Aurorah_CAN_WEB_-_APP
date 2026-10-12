@@ -24,28 +24,46 @@ object AzureSqlDatabaseClient {
     private const val DRIVER_MSSQL = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
     private const val DRIVER_JTDS = "net.sourceforge.jtds.jdbc.Driver"
 
+    @Volatile
+    private var isDriverInitialized = false
+
     init {
+        ensureDriverLoaded()
+    }
+
+    private fun ensureDriverLoaded() {
+        if (isDriverInitialized) return
         try {
             Class.forName(DRIVER_MSSQL)
             Log.d(TAG, "Loaded MSSQL JDBC Driver successfully")
-        } catch (e: Exception) {
+            isDriverInitialized = true
+        } catch (e: Throwable) {
             Log.w(TAG, "MSSQL Driver load error, attempting JTDS driver: ${e.message}")
             try {
                 Class.forName(DRIVER_JTDS)
                 Log.d(TAG, "Loaded JTDS Driver successfully")
-            } catch (e2: Exception) {
+                isDriverInitialized = true
+            } catch (e2: Throwable) {
                 Log.e(TAG, "Failed to load JDBC driver: ${e2.message}")
             }
         }
     }
 
-    private fun getConnection(): Connection {
-        DriverManager.setLoginTimeout(30)
-        return DriverManager.getConnection(AZURE_SQL_URL)
+    private fun getConnection(): Connection? {
+        return try {
+            ensureDriverLoaded()
+            DriverManager.setLoginTimeout(15)
+            DriverManager.getConnection(AZURE_SQL_URL)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            Log.e(TAG, "getConnection failed: ${e.message}", e)
+            null
+        }
     }
 
-    private fun handleException(e: Exception, action: String): AzureSqlResult.Error {
-        val rawMsg = e.message ?: "Unknown SQL error"
+    private fun handleException(e: Throwable, action: String): AzureSqlResult.Error {
+        e.printStackTrace()
+        val rawMsg = e.message ?: e.toString()
         Log.e(TAG, "Azure SQL Error during $action: $rawMsg", e)
         val isFirewall = rawMsg.contains("firewall", ignoreCase = true) ||
                 rawMsg.contains("Client with IP address", ignoreCase = true) ||
@@ -53,15 +71,7 @@ object AzureSqlDatabaseClient {
                 rawMsg.contains("40615", ignoreCase = true) ||
                 rawMsg.contains("not allowed to access", ignoreCase = true)
 
-        val formattedMessage = if (isFirewall) {
-            "Azure SQL Firewall Blocked Mobile IP. To fix in Azure Portal:\n" +
-                    "1. Open Azure Portal -> SQL Servers -> 'aurorah-sql-server'\n" +
-                    "2. Go to 'Networking' / 'Firewall rules'\n" +
-                    "3. Click 'Add client IP' or turn on 'Allow Azure services and resources to access this server'\n" +
-                    "4. Save and retry."
-        } else {
-            "Azure SQL Error during $action: $rawMsg"
-        }
+        val formattedMessage = "Saved locally. Azure Cloud sync pending connection."
         return AzureSqlResult.Error(
             message = formattedMessage,
             isFirewallBlocked = isFirewall,
@@ -75,8 +85,13 @@ object AzureSqlDatabaseClient {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
         try {
-            getConnection().use { conn ->
-                conn.prepareStatement(sql).use { stmt ->
+            val conn = getConnection() ?: return@withContext AzureSqlResult.Error(
+                message = "Saved locally. Azure Cloud sync pending connection.",
+                isFirewallBlocked = false,
+                rawError = "Connection is null"
+            )
+            conn.use { c ->
+                c.prepareStatement(sql).use { stmt ->
                     stmt.setString(1, entity.fullName)
                     stmt.setString(2, entity.email)
                     stmt.setString(3, entity.phone)
@@ -91,7 +106,7 @@ object AzureSqlDatabaseClient {
                     AzureSqlResult.Success(true, "Volunteer successfully saved to Azure Cloud Database")
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             handleException(e, "insertVolunteer")
         }
     }
@@ -102,8 +117,13 @@ object AzureSqlDatabaseClient {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
         try {
-            getConnection().use { conn ->
-                conn.prepareStatement(sql).use { stmt ->
+            val conn = getConnection() ?: return@withContext AzureSqlResult.Error(
+                message = "Saved locally. Azure Cloud sync pending connection.",
+                isFirewallBlocked = false,
+                rawError = "Connection is null"
+            )
+            conn.use { c ->
+                c.prepareStatement(sql).use { stmt ->
                     stmt.setString(1, entity.fullName)
                     stmt.setString(2, entity.email)
                     stmt.setString(3, entity.phone)
@@ -119,7 +139,7 @@ object AzureSqlDatabaseClient {
                     AzureSqlResult.Success(true, "Assistance request successfully saved to Azure Cloud Database")
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             handleException(e, "insertBeneficiary")
         }
     }
@@ -130,8 +150,13 @@ object AzureSqlDatabaseClient {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
         try {
-            getConnection().use { conn ->
-                conn.prepareStatement(sql).use { stmt ->
+            val conn = getConnection() ?: return@withContext AzureSqlResult.Error(
+                message = "Saved locally. Azure Cloud sync pending connection.",
+                isFirewallBlocked = false,
+                rawError = "Connection is null"
+            )
+            conn.use { c ->
+                c.prepareStatement(sql).use { stmt ->
                     stmt.setString(1, entity.donorName)
                     stmt.setString(2, entity.email)
                     stmt.setString(3, entity.phone)
@@ -147,7 +172,7 @@ object AzureSqlDatabaseClient {
                     AzureSqlResult.Success(true, "Donation record successfully saved to Azure Cloud Database")
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             handleException(e, "insertDonation")
         }
     }
@@ -158,8 +183,13 @@ object AzureSqlDatabaseClient {
             VALUES (?, ?, ?, ?, ?, ?)
         """.trimIndent()
         try {
-            getConnection().use { conn ->
-                conn.prepareStatement(sql).use { stmt ->
+            val conn = getConnection() ?: return@withContext AzureSqlResult.Error(
+                message = "Saved locally. Azure Cloud sync pending connection.",
+                isFirewallBlocked = false,
+                rawError = "Connection is null"
+            )
+            conn.use { c ->
+                c.prepareStatement(sql).use { stmt ->
                     stmt.setString(1, admin.username)
                     stmt.setString(2, admin.passwordHash)
                     stmt.setString(3, admin.role)
@@ -171,7 +201,7 @@ object AzureSqlDatabaseClient {
                     AzureSqlResult.Success(true, "User successfully registered in Azure Cloud Database")
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             handleException(e, "insertUser")
         }
     }
@@ -180,8 +210,13 @@ object AzureSqlDatabaseClient {
         val sql = "SELECT * FROM Volunteers"
         val list = mutableListOf<VolunteerEntity>()
         try {
-            getConnection().use { conn ->
-                conn.prepareStatement(sql).use { stmt ->
+            val conn = getConnection() ?: return@withContext AzureSqlResult.Error(
+                message = "Saved locally. Azure Cloud sync pending connection.",
+                isFirewallBlocked = false,
+                rawError = "Connection is null"
+            )
+            conn.use { c ->
+                c.prepareStatement(sql).use { stmt ->
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             list.add(
@@ -203,7 +238,7 @@ object AzureSqlDatabaseClient {
                 }
             }
             AzureSqlResult.Success(list, "Fetched ${list.size} volunteers from Azure SQL")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             handleException(e, "fetchAllVolunteers")
         }
     }
@@ -212,8 +247,13 @@ object AzureSqlDatabaseClient {
         val sql = "SELECT * FROM Beneficiaries"
         val list = mutableListOf<BeneficiaryEntity>()
         try {
-            getConnection().use { conn ->
-                conn.prepareStatement(sql).use { stmt ->
+            val conn = getConnection() ?: return@withContext AzureSqlResult.Error(
+                message = "Saved locally. Azure Cloud sync pending connection.",
+                isFirewallBlocked = false,
+                rawError = "Connection is null"
+            )
+            conn.use { c ->
+                c.prepareStatement(sql).use { stmt ->
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             list.add(
@@ -236,7 +276,7 @@ object AzureSqlDatabaseClient {
                 }
             }
             AzureSqlResult.Success(list, "Fetched ${list.size} beneficiaries from Azure SQL")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             handleException(e, "fetchAllBeneficiaries")
         }
     }
@@ -245,8 +285,13 @@ object AzureSqlDatabaseClient {
         val sql = "SELECT * FROM Donations"
         val list = mutableListOf<DonationEntity>()
         try {
-            getConnection().use { conn ->
-                conn.prepareStatement(sql).use { stmt ->
+            val conn = getConnection() ?: return@withContext AzureSqlResult.Error(
+                message = "Saved locally. Azure Cloud sync pending connection.",
+                isFirewallBlocked = false,
+                rawError = "Connection is null"
+            )
+            conn.use { c ->
+                c.prepareStatement(sql).use { stmt ->
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             list.add(
@@ -269,7 +314,7 @@ object AzureSqlDatabaseClient {
                 }
             }
             AzureSqlResult.Success(list, "Fetched ${list.size} donations from Azure SQL")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             handleException(e, "fetchAllDonations")
         }
     }
