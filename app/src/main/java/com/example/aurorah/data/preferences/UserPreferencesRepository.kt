@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.aurorah.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
@@ -25,7 +26,7 @@ data class UserSession(
     val popiaConsentVersion: String = "v1.0"
 )
 
-class UserPreferencesRepository(private val context: Context) {
+open class UserPreferencesRepository(private val context: Context? = null) {
 
     private object PreferencesKeys {
         val THEME_MODE = stringPreferencesKey("theme_mode")
@@ -43,16 +44,16 @@ class UserPreferencesRepository(private val context: Context) {
         val LAST_SYNCED = stringPreferencesKey("last_synced")
     }
 
-    val themeModeFlow: Flow<ThemeMode> = context.dataStore.data.map { preferences ->
+    open val themeModeFlow: Flow<ThemeMode> = context?.dataStore?.data?.map { preferences ->
         val modeName = preferences[PreferencesKeys.THEME_MODE] ?: ThemeMode.SYSTEM.name
         runCatching { ThemeMode.valueOf(modeName) }.getOrDefault(ThemeMode.SYSTEM)
-    }
+    } ?: MutableStateFlow(ThemeMode.SYSTEM)
 
-    val languageCodeFlow: Flow<String> = context.dataStore.data.map { preferences ->
+    open val languageCodeFlow: Flow<String> = context?.dataStore?.data?.map { preferences ->
         preferences[PreferencesKeys.LANGUAGE_CODE] ?: "en"
-    }
+    } ?: MutableStateFlow("en")
 
-    val userSessionFlow: Flow<UserSession> = context.dataStore.data.map { preferences ->
+    open val userSessionFlow: Flow<UserSession> = context?.dataStore?.data?.map { preferences ->
         UserSession(
             isLoggedIn = preferences[PreferencesKeys.IS_LOGGED_IN] ?: false,
             username = preferences[PreferencesKeys.USERNAME] ?: "",
@@ -64,30 +65,30 @@ class UserPreferencesRepository(private val context: Context) {
             popiaConsentTimestamp = preferences[PreferencesKeys.POPIA_CONSENT_TIMESTAMP] ?: "",
             popiaConsentVersion = preferences[PreferencesKeys.POPIA_CONSENT_VERSION] ?: "v1.0"
         )
-    }
+    } ?: MutableStateFlow(UserSession())
 
-    val notificationsEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+    open val notificationsEnabledFlow: Flow<Boolean> = context?.dataStore?.data?.map { preferences ->
         preferences[PreferencesKeys.NOTIFICATIONS_ENABLED] ?: true
-    }
+    } ?: MutableStateFlow(true)
 
-    val lastSyncedFlow: Flow<String> = context.dataStore.data.map { preferences ->
+    open val lastSyncedFlow: Flow<String> = context?.dataStore?.data?.map { preferences ->
         preferences[PreferencesKeys.LAST_SYNCED] ?: "Just now"
-    }
+    } ?: MutableStateFlow("Just now")
 
-    suspend fun setThemeMode(themeMode: ThemeMode) {
-        context.dataStore.edit { preferences ->
+    open suspend fun setThemeMode(themeMode: ThemeMode) {
+        context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.THEME_MODE] = themeMode.name
         }
     }
 
-    suspend fun setLanguageCode(languageCode: String) {
-        context.dataStore.edit { preferences ->
+    open suspend fun setLanguageCode(languageCode: String) {
+        context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.LANGUAGE_CODE] = languageCode
         }
     }
 
-    suspend fun setUserSession(session: UserSession) {
-        context.dataStore.edit { preferences ->
+    open suspend fun setUserSession(session: UserSession) {
+        context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.IS_LOGGED_IN] = session.isLoggedIn
             preferences[PreferencesKeys.USERNAME] = session.username
             preferences[PreferencesKeys.FULL_NAME] = session.fullName
@@ -100,8 +101,8 @@ class UserPreferencesRepository(private val context: Context) {
         }
     }
 
-    suspend fun clearUserSession() {
-        context.dataStore.edit { preferences ->
+    open suspend fun clearUserSession() {
+        context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.IS_LOGGED_IN] = false
             preferences[PreferencesKeys.USERNAME] = ""
             preferences[PreferencesKeys.FULL_NAME] = ""
@@ -114,14 +115,14 @@ class UserPreferencesRepository(private val context: Context) {
         }
     }
 
-    suspend fun setNotificationsEnabled(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
+    open suspend fun setNotificationsEnabled(enabled: Boolean) {
+        context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.NOTIFICATIONS_ENABLED] = enabled
         }
     }
 
-    suspend fun updateLastSynced(timestamp: String) {
-        context.dataStore.edit { preferences ->
+    open suspend fun updateLastSynced(timestamp: String) {
+        context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.LAST_SYNCED] = timestamp
         }
     }

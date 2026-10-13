@@ -1,6 +1,12 @@
 package com.example.aurorah.ui.about
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,15 +23,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Help
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Call
+import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Email
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.Handshake
+import androidx.compose.material.icons.rounded.HelpOutline
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.PersonAdd
+import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Star
@@ -37,16 +52,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+data class FaqItemData(
+    val id: Int,
+    val title: String,
+    val summary: String,
+    val details: String,
+    val icon: ImageVector
+)
 
 @Composable
 fun AboutScreen() {
@@ -134,6 +160,93 @@ fun AboutScreen() {
                     icon = Icons.Rounded.Star,
                     modifier = Modifier.weight(1f)
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        // --- EMBEDDED USER GUIDE & FAQ SYSTEM ---
+        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                SectionTitle(title = "User Guide & FAQ System")
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Text(
+                        text = "6 Guides Available",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Tap on any topic below for detailed instructions on using the Aurorah CAN Digital Hub.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            val faqList = remember {
+                listOf(
+                    FaqItemData(
+                        id = 1,
+                        title = "1. How to Register & Manage Account",
+                        summary = "Sign up as a Volunteer, Beneficiary, or Admin with POPIA consent.",
+                        details = "• Navigate to the Login screen and tap 'Register Here'.\n• Select your role: Volunteer, Community Member, Beneficiary, or Admin.\n• Fill in your full name, email address, phone number, and password.\n• Review and accept the POPIA Data Privacy agreement.\n• Your session will automatically authenticate upon registration.",
+                        icon = Icons.Rounded.PersonAdd
+                    ),
+                    FaqItemData(
+                        id = 2,
+                        title = "2. How to Submit Assistance Requests",
+                        summary = "Request food hampers, medical supplies, electricity vouchers, or shelter.",
+                        details = "• Tap the 'Request Assistance' tab on the bottom bar.\n• Choose your category: Food Parcels, Medical Care, Electricity Vouchers, or Housing/Shelter.\n• Specify your family size, address, and urgency level (Normal, High, Urgent, or Emergency).\n• Submit your request to trigger our 3-Tier Resource Matching Engine, which automatically pairs your request with local volunteers.",
+                        icon = Icons.Rounded.Handshake
+                    ),
+                    FaqItemData(
+                        id = 3,
+                        title = "3. How to Make Donations & Support Causes",
+                        summary = "Contribute via EFT, SnapScan, or Credit Card for high-impact causes.",
+                        details = "• Open the 'Donate' screen from the bottom navigation bar.\n• Choose an earmarked cause (e.g. Hanover Park Kitchen Drive, Winter Food Security).\n• Select or enter your donation amount in South African Rand (ZAR).\n• Choose your preferred payment method (EFT, SnapScan, Credit Card).\n• Toggle 'Make Anonymous' if you prefer to keep your identity confidential.",
+                        icon = Icons.Rounded.Payments
+                    ),
+                    FaqItemData(
+                        id = 4,
+                        title = "4. How to Download Tax Receipts & Audit Reports",
+                        summary = "Generate Section 18A PDF tax receipts and view public audit balance sheets.",
+                        details = "• Upon completing a donation, tap 'Download Tax Receipt (PDF)' to generate your official Section 18A tax deduction document.\n• Navigate to the 'Impact & Reports' screen to view completed financial audits.\n• Tap any listed report to generate and save a PDF or CSV format report directly to your device storage.",
+                        icon = Icons.Rounded.ReceiptLong
+                    ),
+                    FaqItemData(
+                        id = 5,
+                        title = "5. How to Switch App Languages",
+                        summary = "Localized support for English, Afrikaans, and isiXhosa.",
+                        details = "• Open the 'Settings' tab from the bottom navigation bar.\n• Tap on 'Language Preference'.\n• Select your preferred language: English, Afrikaans, or isiXhosa.\n• The entire application interface will dynamically rebind string resources to your selected language.",
+                        icon = Icons.Rounded.Language
+                    ),
+                    FaqItemData(
+                        id = 6,
+                        title = "6. How to View & Export Impact Reports",
+                        summary = "Access live community metrics and export operational data.",
+                        details = "• Go to the 'Impact & Reports' screen.\n• View real-time counters for families fed, active volunteers, and total funds deployed.\n• Filter reports by category (Impact Assessment, Financial Audit, Operations Log).\n• Tap 'Export CSV' or 'Generate PDF' to download full reports for local record-keeping.",
+                        icon = Icons.Rounded.Description
+                    )
+                )
+            }
+
+            faqList.forEach { faq ->
+                FaqExpandableCard(faqItem = faq)
+                Spacer(modifier = Modifier.height(10.dp))
             }
         }
 
@@ -301,6 +414,100 @@ fun AboutScreen() {
                     ContactRow(icon = Icons.Rounded.Email, text = "info@aurorahcan.org / latifah@aurorahcan.org")
                     Spacer(modifier = Modifier.height(10.dp))
                     ContactRow(icon = Icons.Rounded.Call, text = "+27 21 903 0000 (Helpline available 08:00 - 18:00)")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FaqExpandableCard(faqItem: FaqItemData) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = !expanded },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (expanded)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+            else
+                MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (expanded) 3.dp else 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (expanded) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.primaryContainer
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = faqItem.icon,
+                            contentDescription = null,
+                            tint = if (expanded) MaterialTheme.colorScheme.onPrimary
+                            else MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        Text(
+                            text = faqItem.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (!expanded) {
+                            Text(
+                                text = faqItem.summary,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+                }
+
+                Icon(
+                    imageVector = if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            AnimatedVisibility(
+                visible = expanded,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column(modifier = Modifier.padding(top = 12.dp)) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = faqItem.details,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 22.sp
+                    )
                 }
             }
         }
