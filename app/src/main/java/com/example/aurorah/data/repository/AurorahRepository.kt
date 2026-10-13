@@ -16,7 +16,11 @@ import com.example.aurorah.data.local.entity.VolunteerEntity
 import com.example.aurorah.data.preferences.UserPreferencesRepository
 import com.example.aurorah.data.preferences.UserSession
 import com.example.aurorah.data.remote.AzureServerConnectionStatus
-import com.example.aurorah.data.remote.AzureSqlDatabaseClient
+import com.example.aurorah.data.remote.AurorahNetworkClient
+import com.example.aurorah.data.remote.TokenStore
+import com.example.aurorah.data.remote.dto.AssistanceRequestDto
+import com.example.aurorah.data.remote.dto.DonationRequestDto
+import com.example.aurorah.data.remote.dto.VolunteerSignupRequestDto
 import com.example.aurorah.data.remote.AzureSqlResult
 import com.example.aurorah.data.remote.OfflineSyncManager
 import com.example.aurorah.data.remote.SyncResult
@@ -114,21 +118,6 @@ open class AurorahRepository(
 
     open suspend fun insertAdmin(admin: AdminEntity): Long = withContext(Dispatchers.IO) {
         val id = database?.adminDao()?.insert(admin) ?: 1L
-        try {
-            val res = AzureSqlDatabaseClient.insertUser(admin)
-            handleAzureSqlOperation(res, "User / Admin (${admin.username})")
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            Log.e("AurorahRepository", "Azure SQL insertUser error: ${e.message}", e)
-            handleAzureSqlOperation(
-                AzureSqlResult.Error(
-                    message = "Saved locally. Azure Cloud sync pending connection.",
-                    isFirewallBlocked = false,
-                    rawError = e.message ?: e.toString()
-                ),
-                "User / Admin (${admin.username})"
-            )
-        }
         return@withContext id
     }
 
@@ -142,19 +131,9 @@ open class AurorahRepository(
 
     open suspend fun insertVolunteer(volunteer: VolunteerEntity): Long = withContext(Dispatchers.IO) {
         val id = database?.volunteerDao()?.insert(volunteer) ?: 1L
-        try {
-            val res = AzureSqlDatabaseClient.insertVolunteer(volunteer)
-            handleAzureSqlOperation(res, "Volunteer (${volunteer.fullName})")
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            Log.e("AurorahRepository", "Azure SQL insertVolunteer error: ${e.message}", e)
-            handleAzureSqlOperation(
-                AzureSqlResult.Error(
-                    message = "Saved locally. Azure Cloud sync pending connection.",
-                    isFirewallBlocked = false,
-                    rawError = e.message ?: e.toString()
-                ),
-                "Volunteer (${volunteer.fullName})"
+        pushToServer("volunteer registration") {
+            AurorahNetworkClient.apiService.submitVolunteer(
+                VolunteerSignupRequestDto(volunteer.fullName, volunteer.phone, volunteer.skills, volunteer.area, volunteer.availability)
             )
         }
         return@withContext id
@@ -173,19 +152,17 @@ open class AurorahRepository(
 
     open suspend fun insertBeneficiary(beneficiary: BeneficiaryEntity): Long = withContext(Dispatchers.IO) {
         val id = database?.beneficiaryDao()?.insert(beneficiary) ?: 1L
-        try {
-            val res = AzureSqlDatabaseClient.insertBeneficiary(beneficiary)
-            handleAzureSqlOperation(res, "Beneficiary / Assistance Request (${beneficiary.fullName})")
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            Log.e("AurorahRepository", "Azure SQL insertBeneficiary error: ${e.message}", e)
-            handleAzureSqlOperation(
-                AzureSqlResult.Error(
-                    message = "Saved locally. Azure Cloud sync pending connection.",
-                    isFirewallBlocked = false,
-                    rawError = e.message ?: e.toString()
-                ),
-                "Beneficiary / Assistance Request (${beneficiary.fullName})"
+        pushToServer("assistance request") {
+            val category = beneficiary.assistanceNeeded.substringBefore(": ", "General")
+            AurorahNetworkClient.apiService.submitAssistanceRequest(
+                AssistanceRequestDto(
+                    contactName = beneficiary.fullName,
+                    contactPhone = beneficiary.phone,
+                    area = beneficiary.area,
+                    category = category,
+                    requestDetails = beneficiary.assistanceNeeded.substringAfter(": "),
+                    urgency = beneficiary.urgency
+                )
             )
         }
         return@withContext id
@@ -214,22 +191,30 @@ open class AurorahRepository(
 
     open suspend fun insertDonation(donation: DonationEntity): Long = withContext(Dispatchers.IO) {
         val id = database?.donationDao()?.insert(donation) ?: 1L
-        try {
-            val res = AzureSqlDatabaseClient.insertDonation(donation)
-            handleAzureSqlOperation(res, "Donation (${donation.donorName} - R${donation.amount})")
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            Log.e("AurorahRepository", "Azure SQL insertDonation error: ${e.message}", e)
-            handleAzureSqlOperation(
-                AzureSqlResult.Error(
-                    message = "Saved locally. Azure Cloud sync pending connection.",
-                    isFirewallBlocked = false,
-                    rawError = e.message ?: e.toString()
-                ),
-                "Donation (${donation.donorName} - R${donation.amount})"
+        pushToServer("donation") {
+            AurorahNetworkClient.apiService.createDonation(
+                DonationRequestDto(
+                    category = donation.cause,
+                    amount = donation.amount,
+                    paymentMethod = donation.paymentMethod,
+                    userEmail = TokenStore.email().orEmpty()
+                )
             )
         }
         return@withContext id
+    }
+
+    /** Runs an API upload; throws (after the local save) so the UI can tell the user it didn't sync. */
+    private suspend fun pushToServer(what: String, call: suspend () -> Unit) {
+        if (TokenStore.get() == null || TokenStore.email() == null) {
+            throw IllegalStateException("Sign in to sync your $what to the server.")
+        }
+        try {
+            call()
+        } catch (e: Throwable) {
+            Log.e("AurorahRepository", "Upload of $what failed: ${e.message}", e)
+            throw e
+        }
     }
 
     open fun getTotalDonationsAmount(): Flow<Double?> = database?.donationDao()?.getTotalDonationsAmount() ?: flowOf(0.0)

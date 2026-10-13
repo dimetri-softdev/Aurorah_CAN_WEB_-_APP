@@ -7,6 +7,13 @@ import androidx.lifecycle.viewModelScope
 import com.example.aurorah.data.local.entity.AdminEntity
 import com.example.aurorah.data.local.entity.VolunteerEntity
 import com.example.aurorah.data.preferences.UserSession
+import com.example.aurorah.data.remote.AurorahNetworkClient
+import com.example.aurorah.data.remote.TokenStore
+import com.example.aurorah.data.remote.dto.GoogleSsoRequestDto
+import com.example.aurorah.data.remote.dto.LoginRequestDto
+import com.example.aurorah.data.remote.dto.RegisterRequestDto
+import retrofit2.HttpException
+import java.io.IOException
 import com.example.aurorah.data.repository.AurorahRepository
 import com.example.aurorah.util.SecurityUtils
 import kotlinx.coroutines.CoroutineScope
@@ -134,37 +141,43 @@ class AuthViewModel(
         }
     }
 
-    fun loginWithGoogleSso(emailOverride: String? = null, nameOverride: String? = null) {
+    /** Signs in with a real Google ID token (obtained via Google Sign-In / Credential Manager). */
+    fun loginWithGoogleIdToken(idToken: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
                 val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-                val ssoEmail = emailOverride ?: "sso.user@aurorahcan.org"
-                val ssoName = nameOverride ?: "Google Authenticated User"
-                val sessionToken = SecurityUtils.generateSessionToken()
-
+                val auth = AurorahNetworkClient.apiService.googleSso(GoogleSsoRequestDto(idToken))
+                val apiUser = auth.user
+                TokenStore.save(auth.token, apiUser.email)
                 repository.setUserSession(
                     UserSession(
                         isLoggedIn = true,
-                        username = ssoEmail.substringBefore("@"),
-                        fullName = ssoName,
-                        email = ssoEmail,
-                        role = "VOLUNTEER",
-                        sessionToken = sessionToken,
+                        username = apiUser.email.substringBefore("@"),
+                        fullName = apiUser.fullName,
+                        email = apiUser.email,
+                        role = apiUser.role.uppercase(Locale.ROOT),
+                        sessionToken = SecurityUtils.generateSessionToken(),
                         authProvider = "Google",
                         popiaConsentTimestamp = now,
                         popiaConsentVersion = "v1.0"
                     )
                 )
-
                 _uiState.value = _uiState.value.copy(isLoading = false)
                 _eventFlow.emit(AuthEvent.LoginSuccess)
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                Log.e("AuthViewModel", "Error during Google SSO login: ${e.message}", e)
-                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Saved locally. Azure Cloud sync pending connection.")
+            } catch (e: HttpException) {
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = apiErrorMessage(e))
+            } catch (e: IOException) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Cannot reach the server. Check your connection."
+                )
             }
         }
+    }
+
+    fun onGoogleSignInUnavailable() {
+        _uiState.value = _uiState.value.copy(errorMessage = "Google sign-in isn't set up yet. Please use email and password.")
     }
 
     fun login() {
@@ -181,6 +194,45 @@ class AuthViewModel(
             try {
                 val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
                 val sessionToken = SecurityUtils.generateSessionToken()
+
+                // Website accounts (stored in Azure SQL) sign in through the API
+                if (emailOrUsername.contains("@")) {
+                    val auth = try {
+                        AurorahNetworkClient.apiService.                        login(LoginRequestDto(emailOrUsername, password))
+                    } catch (e: HttpException) {
+                        if (e.code() != 401 && e.code() != 403) {
+                            _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = apiErrorMessage(e))
+                            return@launch
+                        }
+                        null
+                    } catch (e: IOException) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = "Cannot reach the server. Check your connection."
+                        )
+                        return@launch
+                    }
+                    if (auth != null) {
+                        val apiUser = auth.user
+                        TokenStore.save(auth.token, apiUser.email)
+                        repository.setUserSession(
+                            UserSession(
+                                isLoggedIn = true,
+                                username = apiUser.email.substringBefore("@"),
+                                fullName = apiUser.fullName,
+                                email = apiUser.email,
+                                role = apiUser.role.uppercase(Locale.ROOT),
+                                sessionToken = sessionToken,
+                                authProvider = "Email",
+                                popiaConsentTimestamp = now,
+                                popiaConsentVersion = "v1.0"
+                            )
+                        )
+                        _uiState.value = _uiState.value.copy(isLoading = false)
+                        _eventFlow.emit(AuthEvent.LoginSuccess)
+                        return@launch
+                    }
+                }
 
                 val admin = repository.getAdminByEmailOrUsername(emailOrUsername)
                 if (admin != null) {
@@ -211,29 +263,10 @@ class AuthViewModel(
                     }
                 }
 
-                // General volunteer or community member authorization
-                val username = emailOrUsername.substringBefore("@")
-                val assignedRole = if (emailOrUsername.contains("admin", ignoreCase = true)) "ADMIN" else "VOLUNTEER"
-
-                repository.setUserSession(
-                    UserSession(
-                        isLoggedIn = true,
-                        username = username,
-                        fullName = username.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
-                        email = if (emailOrUsername.contains("@")) emailOrUsername else "$emailOrUsername@gmail.com",
-                        role = assignedRole,
-                        sessionToken = sessionToken,
-                        authProvider = "Email",
-                        popiaConsentTimestamp = now,
-                        popiaConsentVersion = "v1.0"
-                    )
-                )
-                _uiState.value = _uiState.value.copy(isLoading = false)
-                _eventFlow.emit(AuthEvent.LoginSuccess)
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Invalid email or password.")
             } catch (e: Throwable) {
-                e.printStackTrace()
                 Log.e("AuthViewModel", "Error during login: ${e.message}", e)
-                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Saved locally. Azure Cloud sync pending connection.")
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Login failed. Please try again.")
             }
         }
     }
@@ -246,6 +279,11 @@ class AuthViewModel(
         }
         if (state.regPassword != state.regConfirmPassword) {
             _uiState.value = _uiState.value.copy(errorMessage = "Passwords do not match.")
+            return
+        }
+
+        if (state.regPassword.length < 12) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Password must be at least 12 characters.")
             return
         }
 
@@ -264,8 +302,28 @@ class AuthViewModel(
                     else -> "GUEST"
                 }
 
+                if (mappedRole != "ADMIN") {
+                    val auth = try {
+                        AurorahNetworkClient.apiService.register(
+                            RegisterRequestDto(state.fullName.trim(), state.regEmail.trim(), state.regPassword, state.selectedRole)
+                        )
+                    } catch (e: HttpException) {
+                        _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = apiErrorMessage(e))
+                        return@launch
+                    } catch (e: IOException) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = "Cannot reach the server. Check your connection."
+                        )
+                        return@launch
+                    }
+                    TokenStore.save(auth.token, auth.user.email)
+                }
+
                 if (mappedRole == "VOLUNTEER") {
-                    repository.insertVolunteer(
+                    // The account already exists on the server; don't fail sign-up if the profile upload fails
+                    runCatching {
+                        repository.insertVolunteer(
                         VolunteerEntity(
                             fullName = state.fullName,
                             email = state.regEmail,
@@ -279,7 +337,8 @@ class AuthViewModel(
                             popiaConsentTimestamp = now,
                             popiaConsentVersion = "v1.0"
                         )
-                    )
+                        )
+                    }
                 } else if (mappedRole == "ADMIN") {
                     repository.insertAdmin(
                         AdminEntity(
@@ -321,6 +380,7 @@ class AuthViewModel(
     }
 
     fun logout() {
+        TokenStore.clear()
         viewModelScope.launch {
             try {
                 repository.clearUserSession()
@@ -337,6 +397,13 @@ class AuthViewModel(
             return AuthViewModel(repository) as T
         }
     }
+}
+
+private fun apiErrorMessage(e: HttpException): String {
+    if (e.code() == 429) return "Too many attempts. Please wait a moment and try again."
+    val body = runCatching { e.response()?.errorBody()?.string() }.getOrNull().orEmpty()
+    val detail = Regex("\"detail\"\\s*:\\s*\"([^\"]+)\"").find(body)?.groupValues?.get(1)
+    return detail ?: "Request failed (${e.code()})."
 }
 
 private fun <T> Flow<T>.asStateFlowIn(

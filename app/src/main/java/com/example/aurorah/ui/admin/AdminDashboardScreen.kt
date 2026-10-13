@@ -138,7 +138,7 @@ fun AdminDashboardScreen(
 
     // POPIA Audit Verification Modal
     if (showPopiaAuditDialog) {
-        val nowStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        val nowStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
         AlertDialog(
             onDismissRequest = { showPopiaAuditDialog = false },
             icon = {

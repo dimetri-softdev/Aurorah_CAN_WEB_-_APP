@@ -148,7 +148,11 @@ class DonateViewModel(
                 Log.e("DonateViewModel", "Donation processing error: ${e.message}", e)
                 _uiState.value = state.copy(
                     isProcessing = false,
-                    errorMessage = "Saved locally. Azure Cloud sync pending connection."
+                    errorMessage = if (e is IllegalStateException) {
+                        "Saved on this phone only. Please sign in with your account to send your donation."
+                    } else {
+                        "Could not reach the server. Saved on this phone only; please try again later."
+                    }
                 )
             }
         }

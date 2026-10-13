@@ -6,34 +6,23 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class CommunityNeedDto(
-    @field:Json(name = "id") val id: Int = 0,
+    @field:Json(name = "needId") val needId: Int,
+    @field:Json(name = "title") val title: String,
     @field:Json(name = "description") val description: String,
-    @field:Json(name = "assistanceType") val assistanceType: String,
-    @field:Json(name = "priorityLevel") val priorityLevel: String,
-    @field:Json(name = "status") val status: String = "Open",
-    @field:Json(name = "area") val area: String,
-    @field:Json(name = "dateCreated") val dateCreated: String,
-    @field:Json(name = "assignedVolunteerId") val assignedVolunteerId: Int? = null
+    @field:Json(name = "location") val location: String,
+    @field:Json(name = "priority") val priority: String,
+    @field:Json(name = "category") val category: String,
+    @field:Json(name = "status") val status: String,
+    @field:Json(name = "createdAt") val createdAt: String
 )
 
 fun CommunityNeedDto.toEntity(): CommunityNeedEntity = CommunityNeedEntity(
-    id = id,
-    description = description,
-    assistanceType = assistanceType,
-    priorityLevel = priorityLevel,
+    id = needId,
+    description = if (description.isBlank()) title else "$title - $description",
+    assistanceType = category,
+    priorityLevel = priority,
     status = status,
-    area = area,
-    dateCreated = dateCreated,
-    assignedVolunteerId = assignedVolunteerId
-)
-
-fun CommunityNeedEntity.toDto(): CommunityNeedDto = CommunityNeedDto(
-    id = id,
-    description = description,
-    assistanceType = assistanceType,
-    priorityLevel = priorityLevel,
-    status = status,
-    area = area,
-    dateCreated = dateCreated,
-    assignedVolunteerId = assignedVolunteerId
+    area = location,
+    dateCreated = createdAt,
+    assignedVolunteerId = null
 )

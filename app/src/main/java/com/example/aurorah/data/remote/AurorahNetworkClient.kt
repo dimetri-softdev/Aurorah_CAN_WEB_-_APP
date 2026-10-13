@@ -1,7 +1,9 @@
 package com.example.aurorah.data.remote
 
+import com.example.aurorah.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -16,15 +18,26 @@ object AurorahNetworkClient {
             .build()
     }
 
+    private val authInterceptor = Interceptor { chain ->
+        val builder = chain.request().newBuilder()
+        TokenStore.get()?.let { builder.header("Authorization", "Bearer $it") }
+        val response = chain.proceed(builder.build())
+        if (response.code == 401) TokenStore.clear()
+        response
+    }
+
     private val okHttpClient: OkHttpClient by lazy {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-        OkHttpClient.Builder()
+        val builder = OkHttpClient.Builder()
             .connectTimeout(RemoteConfig.CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(RemoteConfig.READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .addInterceptor(loggingInterceptor)
-            .build()
+            .addInterceptor(authInterceptor)
+        if (BuildConfig.DEBUG) {
+            builder.addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BASIC
+                redactHeader("Authorization")
+            })
+        }
+        builder.build()
     }
 
     private val retrofit: Retrofit by lazy {

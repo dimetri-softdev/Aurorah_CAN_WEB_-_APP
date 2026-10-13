@@ -18,6 +18,7 @@ class AurorahApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        com.example.aurorah.data.remote.TokenStore.init(this)
     }
 
     companion object {

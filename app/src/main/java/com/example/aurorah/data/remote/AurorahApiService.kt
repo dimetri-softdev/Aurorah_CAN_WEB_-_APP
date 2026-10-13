@@ -1,99 +1,51 @@
 package com.example.aurorah.data.remote
 
-import com.example.aurorah.data.remote.dto.AdminDto
-import com.example.aurorah.data.remote.dto.BeneficiaryDto
+import com.example.aurorah.data.remote.dto.ApiMessageDto
+import com.example.aurorah.data.remote.dto.ChangePasswordRequestDto
 import com.example.aurorah.data.remote.dto.CommunityNeedDto
-import com.example.aurorah.data.remote.dto.DonationDto
+import com.example.aurorah.data.remote.dto.DonationRequestDto
+import com.example.aurorah.data.remote.dto.GoogleSsoRequestDto
+import com.example.aurorah.data.remote.dto.LoginRequestDto
 import com.example.aurorah.data.remote.dto.NewsDto
-import com.example.aurorah.data.remote.dto.ReportDto
-import com.example.aurorah.data.remote.dto.VolunteerDto
-import retrofit2.Response
+import com.example.aurorah.data.remote.dto.OfferAssistanceRequestDto
+import com.example.aurorah.data.remote.dto.RegisterRequestDto
+import com.example.aurorah.data.remote.dto.AssistanceRequestDto
+import com.example.aurorah.data.remote.dto.AuthResponseDto
+import com.example.aurorah.data.remote.dto.VolunteerSignupRequestDto
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Path
 
+/** Mirrors the FastAPI mobile routes under /api. The app never talks to the database directly. */
 interface AurorahApiService {
 
-    // --- Server Health / Azure SQL Status ---
-    @GET("api/health")
-    suspend fun checkHealth(): Response<Map<String, String>>
+    @POST("api/auth/register")
+    suspend fun register(@Body body: RegisterRequestDto): AuthResponseDto
 
-    // --- Volunteers ---
-    @GET("api/volunteers")
-    suspend fun getVolunteers(): List<VolunteerDto>
+    @POST("api/auth/login")
+    suspend fun login(@Body body: LoginRequestDto): AuthResponseDto
 
-    @GET("api/volunteers/{id}")
-    suspend fun getVolunteerById(@Path("id") id: Int): VolunteerDto
+    @POST("api/auth/google-sso")
+    suspend fun googleSso(@Body body: GoogleSsoRequestDto): AuthResponseDto
 
     @POST("api/volunteers")
-    suspend fun createVolunteer(@Body volunteer: VolunteerDto): VolunteerDto
+    suspend fun submitVolunteer(@Body body: VolunteerSignupRequestDto): ApiMessageDto
 
-    @PUT("api/volunteers/{id}")
-    suspend fun updateVolunteer(@Path("id") id: Int, @Body volunteer: VolunteerDto): VolunteerDto
+    @POST("api/assistance-requests")
+    suspend fun submitAssistanceRequest(@Body body: AssistanceRequestDto): ApiMessageDto
 
-    @DELETE("api/volunteers/{id}")
-    suspend fun deleteVolunteer(@Path("id") id: Int): Response<Unit>
+    @POST("api/auth/change-password")
+    suspend fun changePassword(@Body body: ChangePasswordRequestDto): ApiMessageDto
 
-    // --- Beneficiaries ---
-    @GET("api/beneficiaries")
-    suspend fun getBeneficiaries(): List<BeneficiaryDto>
-
-    @GET("api/beneficiaries/{id}")
-    suspend fun getBeneficiaryById(@Path("id") id: Int): BeneficiaryDto
-
-    @POST("api/beneficiaries")
-    suspend fun createBeneficiary(@Body beneficiary: BeneficiaryDto): BeneficiaryDto
-
-    @PUT("api/beneficiaries/{id}")
-    suspend fun updateBeneficiary(@Path("id") id: Int, @Body beneficiary: BeneficiaryDto): BeneficiaryDto
-
-    @DELETE("api/beneficiaries/{id}")
-    suspend fun deleteBeneficiary(@Path("id") id: Int): Response<Unit>
-
-    // --- Donations ---
-    @GET("api/donations")
-    suspend fun getDonations(): List<DonationDto>
-
-    @GET("api/donations/{id}")
-    suspend fun getDonationById(@Path("id") id: Int): DonationDto
-
-    @POST("api/donations")
-    suspend fun createDonation(@Body donation: DonationDto): DonationDto
-
-    // --- Community Needs ---
-    @GET("api/needs")
-    suspend fun getNeeds(): List<CommunityNeedDto>
-
-    @GET("api/needs/{id}")
-    suspend fun getNeedById(@Path("id") id: Int): CommunityNeedDto
-
-    @POST("api/needs")
-    suspend fun createNeed(@Body need: CommunityNeedDto): CommunityNeedDto
-
-    @PUT("api/needs/{id}")
-    suspend fun updateNeed(@Path("id") id: Int, @Body need: CommunityNeedDto): CommunityNeedDto
-
-    // --- Admins ---
-    @GET("api/admins")
-    suspend fun getAdmins(): List<AdminDto>
-
-    @POST("api/admins")
-    suspend fun createAdmin(@Body admin: AdminDto): AdminDto
-
-    // --- News ---
     @GET("api/news")
     suspend fun getNews(): List<NewsDto>
 
-    @POST("api/news")
-    suspend fun createNews(@Body news: NewsDto): NewsDto
+    @GET("api/needs")
+    suspend fun getNeeds(): List<CommunityNeedDto>
 
-    // --- Reports ---
-    @GET("api/reports")
-    suspend fun getReports(): List<ReportDto>
+    @POST("api/needs/offer-assistance")
+    suspend fun offerAssistance(@Body body: OfferAssistanceRequestDto): ApiMessageDto
 
-    @POST("api/reports")
-    suspend fun createReport(@Body report: ReportDto): ReportDto
+    @POST("api/donations")
+    suspend fun createDonation(@Body body: DonationRequestDto): ApiMessageDto
 }

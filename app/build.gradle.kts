@@ -22,7 +22,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Android emulator alias for the host machine running uvicorn
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000/\"")
+        }
         release {
+            // TODO: replace with your deployed HTTPS backend URL
+            buildConfigField("String", "API_BASE_URL", "\"https://YOUR-BACKEND-HOST/\"")
             optimization {
                 enable = false
             }
@@ -34,6 +40,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
@@ -46,8 +53,7 @@ android {
 }
 
 dependencies {
-    implementation(libs.mssql.jdbc)
-    implementation(libs.jtds)
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.activity.compose)

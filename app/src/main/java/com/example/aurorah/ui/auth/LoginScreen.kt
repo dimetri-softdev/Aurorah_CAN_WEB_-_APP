@@ -64,6 +64,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.aurorah.BuildConfig
 import com.example.aurorah.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,7 +148,8 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Quick Admin Fast Switch Card
+            // Debug-only shortcut; never shipped in release builds
+            if (BuildConfig.DEBUG) {
             Card(
                 onClick = { viewModel.performFastAdminSwitch() },
                 modifier = Modifier.fillMaxWidth(),
@@ -183,6 +185,7 @@ fun LoginScreen(
                         )
                     }
                 }
+            }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -287,7 +290,7 @@ fun LoginScreen(
 
             // Google SSO Integration Button
             OutlinedButton(
-                onClick = { viewModel.loginWithGoogleSso() },
+                onClick = { viewModel.onGoogleSignInUnavailable() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

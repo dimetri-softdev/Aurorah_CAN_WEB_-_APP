@@ -121,9 +121,13 @@ class AssistanceViewModel(
             } catch (e: Throwable) {
                 e.printStackTrace()
                 Log.e("AssistanceViewModel", "Assistance submission error: ${e.message}", e)
-                _uiState.value = AssistanceUiState(
-                    referenceNumber = "AUR-LOCAL",
-                    successMessage = "Saved locally. Azure Cloud sync pending connection."
+                _uiState.value = state.copy(
+                    isLoading = false,
+                    errorMessage = if (e is IllegalStateException) {
+                        "Saved on this phone only. Please sign in with your account to send it to our team."
+                    } else {
+                        "Could not reach the server. Saved on this phone only; please try again later."
+                    }
                 )
             }
         }
